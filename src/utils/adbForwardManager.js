@@ -4,10 +4,15 @@
  */
 
 import { ElMessage } from 'element-plus';
+import { withAdbLock } from './adbManager.js';
 
 class AdbForwardManager {
   constructor() {
     this.forwardedPorts = new Map();
+    // One persistent, keep-alive HTTP connection per device port, reused across
+    // requests instead of opening/closing a fresh socket every time - repeatedly
+    // opening sockets was overwhelming the ADB/WebUSB transport.
+    this.persistentConnections = new Map();
   }
 
   /**
@@ -75,6 +80,14 @@ class AdbForwardManager {
     for (const [key, config] of this.forwardedPorts) {
       this.closeForward(config.devicePort);
     }
+    for (const devicePort of Array.from(this.persistentConnections.keys())) {
+      this._closeConnection(devicePort);
+    }
+  }
+
+  /** Close the reusable HTTP connection for a device port, if one is open. */
+  closeHttpConnection(devicePort) {
+    this._closeConnection(devicePort);
   }
 
   /**
@@ -147,8 +160,8 @@ class AdbForwardManager {
   }
 
   /**
-   * Perform a real HTTP request over a fresh ADB socket (one socket per request,
-   * mirroring a plain HTTP/1.1 client) and return the parsed response.
+   * Perform a real HTTP request, reusing one persistent keep-alive socket per
+   * device port instead of opening a fresh one each time.
    * @param {Object} adb - ADB instance
    * @param {number} devicePort - Port on Android device the HTTP server listens on
    * @param {string} path - Request path, e.g. "/" or "/style.css"
@@ -167,55 +180,209 @@ class AdbForwardManager {
       throw new Error('ADB instance not available');
     }
 
-    const socket = await adb.createSocket(`tcp:${devicePort}`);
-    if (!socket) {
-      throw new Error(`Failed to create socket to device port ${devicePort}`);
+    const bodyBytes = rawBodyBytes
+      ? (rawBodyBytes instanceof Uint8Array ? rawBodyBytes : new Uint8Array(rawBodyBytes))
+      : (body ? new TextEncoder().encode(body) : null);
+
+    let requestText = `${method} ${path} HTTP/1.1\r\n`;
+    requestText += `Host: 127.0.0.1:${devicePort}\r\n`;
+    requestText += `Connection: keep-alive\r\n`;
+    requestText += `User-Agent: Mozilla/5.0 (NowWebAdb-Proxy)\r\n`;
+    requestText += `Accept: */*\r\n`;
+    for (const [key, value] of Object.entries(headers)) {
+      if (!/^(host|connection|content-length)$/i.test(key)) {
+        requestText += `${key}: ${value}\r\n`;
+      }
+    }
+    if (bodyBytes && bodyBytes.length > 0) {
+      requestText += `Content-Length: ${bodyBytes.length}\r\n`;
+    }
+    requestText += '\r\n';
+
+    // One retry with a brand new connection if the reused one turns out to be
+    // dead (device/idle timeout closed it since our last request).
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      const conn = await this._getPersistentConnection(adb, devicePort, onLog, path);
+      try {
+        onLog?.({ type: 'request', path, text: requestText });
+
+        await conn.writer.write(new TextEncoder().encode(requestText));
+        if (bodyBytes && bodyBytes.length > 0) {
+          await conn.writer.write(bodyBytes);
+        }
+
+        const raw = await this._readOneHttpMessage(conn, timeout);
+        onLog?.({ type: 'response', path, text: this._previewBytes(raw), byteLength: raw.length });
+
+        if (conn.closed) {
+          this._closeConnection(devicePort);
+        }
+
+        return this._parseHttpResponse(raw);
+      } catch (error) {
+        this._closeConnection(devicePort);
+        if (attempt === 2) {
+          onLog?.({ type: 'error', path, text: error.message });
+          throw error;
+        }
+        onLog?.({ type: 'info', path, text: `Reused connection failed, reconnecting: ${error.message}` });
+      }
+    }
+  }
+
+  /** Get the existing open persistent connection for a device port, or open a new one. */
+  async _getPersistentConnection(adb, devicePort, onLog, path) {
+    const key = `${devicePort}`;
+    const existing = this.persistentConnections.get(key);
+    if (existing && !existing.closed) {
+      return existing;
     }
 
-    try {
-      let requestText = `${method} ${path} HTTP/1.1\r\n`;
-      requestText += `Host: 127.0.0.1:${devicePort}\r\n`;
-      requestText += `Connection: close\r\n`;
-      requestText += `User-Agent: Mozilla/5.0 (NowWebAdb-Proxy)\r\n`;
-      requestText += `Accept: */*\r\n`;
+    const socket = await this._createSocketWithRetry(adb, devicePort, onLog, path);
+    const conn = {
+      socket,
+      reader: socket.readable.getReader(),
+      writer: socket.writable.getWriter(),
+      buffer: new Uint8Array(0),
+      closed: false
+    };
+    this.persistentConnections.set(key, conn);
+    return conn;
+  }
 
-      for (const [key, value] of Object.entries(headers)) {
-        if (!/^(host|connection|content-length)$/i.test(key)) {
-          requestText += `${key}: ${value}\r\n`;
+  /** Tear down and forget the persistent connection for a device port, if any. */
+  _closeConnection(devicePort) {
+    const key = `${devicePort}`;
+    const conn = this.persistentConnections.get(key);
+    if (!conn) return;
+    this.persistentConnections.delete(key);
+    try { conn.reader.releaseLock(); } catch { /* already released/errored */ }
+    try { conn.writer.releaseLock(); } catch { /* already released/errored */ }
+    try { conn.socket.close?.(); } catch { /* already closed */ }
+  }
+
+  /**
+   * Read exactly one HTTP response off a persistent connection's reader, using
+   * Content-Length/chunked framing to find the message boundary (we can't just
+   * "read until close" anymore since the socket stays open for reuse). Leftover
+   * bytes belonging to the next response are kept in conn.buffer.
+   */
+  async _readOneHttpMessage(conn, timeoutMs) {
+    const deadline = Date.now() + timeoutMs;
+    const readMore = async () => {
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) throw new Error('Timed out waiting for response');
+      const timer = new Promise((_, reject) => setTimeout(() => reject(new Error('Timed out waiting for response')), remaining));
+      const { done, value } = await Promise.race([conn.reader.read(), timer]);
+      if (done) {
+        conn.closed = true;
+        return null;
+      }
+      return value;
+    };
+
+    let buf = conn.buffer;
+    let headerEnd = this._findHeaderBoundary(buf);
+    while (headerEnd === -1) {
+      const chunk = await readMore();
+      if (!chunk) break;
+      buf = this._concatBytes(buf, chunk);
+      headerEnd = this._findHeaderBoundary(buf);
+    }
+    if (headerEnd === -1) {
+      conn.buffer = new Uint8Array(0);
+      return buf;
+    }
+
+    const headerText = new TextDecoder('utf-8').decode(buf.slice(0, headerEnd));
+    if (/Connection:\s*close/i.test(headerText)) {
+      conn.closed = true;
+    }
+
+    if (/Transfer-Encoding:\s*chunked/i.test(headerText)) {
+      while (!this._chunkedTerminatorEnd(buf, headerEnd)) {
+        const chunk = await readMore();
+        if (!chunk) break;
+        buf = this._concatBytes(buf, chunk);
+      }
+      const msgEnd = this._chunkedTerminatorEnd(buf, headerEnd) || buf.length;
+      conn.buffer = msgEnd < buf.length ? buf.slice(msgEnd) : new Uint8Array(0);
+      return buf.slice(0, msgEnd);
+    }
+
+    const lengthMatch = headerText.match(/Content-Length:\s*(\d+)/i);
+    if (lengthMatch) {
+      const totalLength = headerEnd + parseInt(lengthMatch[1], 10);
+      while (buf.length < totalLength) {
+        const chunk = await readMore();
+        if (!chunk) break;
+        buf = this._concatBytes(buf, chunk);
+      }
+      conn.buffer = buf.length > totalLength ? buf.slice(totalLength) : new Uint8Array(0);
+      return buf.slice(0, Math.min(totalLength, buf.length));
+    }
+
+    // Neither Content-Length nor chunked: the only valid boundary left is the
+    // connection closing, so drain until then and don't reuse this socket again.
+    conn.closed = true;
+    while (true) {
+      const chunk = await readMore().catch(() => null);
+      if (!chunk) break;
+      buf = this._concatBytes(buf, chunk);
+    }
+    conn.buffer = new Uint8Array(0);
+    return buf;
+  }
+
+  /** Concatenate two Uint8Arrays. */
+  _concatBytes(a, b) {
+    if (a.length === 0) return b;
+    if (b.length === 0) return a;
+    const merged = new Uint8Array(a.length + b.length);
+    merged.set(a, 0);
+    merged.set(b, a.length);
+    return merged;
+  }
+
+  /** Return the index right after a chunked body's terminating "0\r\n\r\n", or 0 if not found yet. */
+  _chunkedTerminatorEnd(buf, bodyStart) {
+    // A minimal, correctness-over-speed scan: look for "0\r\n\r\n" from bodyStart onward.
+    for (let i = bodyStart; i < buf.length - 4; i++) {
+      if (buf[i] === 48 && buf[i + 1] === 13 && buf[i + 2] === 10 && buf[i + 3] === 13 && buf[i + 4] === 10) {
+        return i + 5;
+      }
+    }
+    return 0;
+  }
+
+  /** Open a socket, retrying with backoff since "Socket open failed" often isn't
+   *  purely concurrency (it can still happen on the very first, fully serialized
+   *  attempt) - the device's server or the WebUSB transport itself seems to need
+   *  a moment to settle between one connection closing and the next opening.
+   *  Also goes through the app-wide ADB lock so it doesn't race with other
+   *  ADB operations elsewhere in the app at least. */
+  async _createSocketWithRetry(adb, devicePort, onLog, path, attempts = 5, baseDelayMs = 150) {
+    let lastError;
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+      try {
+        const socket = await withAdbLock(async () => {
+          const s = await adb.createSocket(`tcp:${devicePort}`);
+          if (!s) {
+            throw new Error(`Failed to create socket to device port ${devicePort}`);
+          }
+          return s;
+        });
+        return socket;
+      } catch (error) {
+        lastError = error;
+        if (attempt < attempts) {
+          const delay = baseDelayMs * 2 ** (attempt - 1);
+          onLog?.({ type: 'info', path, text: `Socket open failed (attempt ${attempt}/${attempts}), retrying in ${delay}ms: ${error.message}` });
+          await new Promise((resolve) => setTimeout(resolve, delay));
         }
       }
-
-      const bodyBytes = rawBodyBytes
-        ? (rawBodyBytes instanceof Uint8Array ? rawBodyBytes : new Uint8Array(rawBodyBytes))
-        : (body ? new TextEncoder().encode(body) : null);
-      if (bodyBytes && bodyBytes.length > 0) {
-        requestText += `Content-Length: ${bodyBytes.length}\r\n`;
-      }
-      requestText += '\r\n';
-
-      onLog?.({ type: 'request', path, text: requestText });
-
-      const writer = socket.writable.getWriter();
-      await writer.write(new TextEncoder().encode(requestText));
-      if (bodyBytes && bodyBytes.length > 0) {
-        await writer.write(bodyBytes);
-      }
-      writer.releaseLock();
-
-      const raw = await this._readAll(socket, timeout);
-      onLog?.({ type: 'response', path, text: this._previewBytes(raw), byteLength: raw.length });
-
-      return this._parseHttpResponse(raw);
-    } catch (error) {
-      onLog?.({ type: 'error', path, text: error.message });
-      throw error;
-    } finally {
-      try {
-        socket.close?.();
-      } catch (e) {
-        // socket already closed by remote, ignore
-      }
     }
+    throw lastError;
   }
 
   /** Decode up to maxBytes of a raw byte response as text, for log previews. */
@@ -223,49 +390,6 @@ class AdbForwardManager {
     const slice = bytes.length > maxBytes ? bytes.slice(0, maxBytes) : bytes;
     const text = new TextDecoder('utf-8', { fatal: false }).decode(slice);
     return bytes.length > maxBytes ? `${text}\n... [truncated, ${bytes.length} bytes total]` : text;
-  }
-
-
-
-  /**
-   * Read every byte the socket sends until it closes or a timeout elapses.
-   * @param {Object} socket
-   * @param {number} timeout
-   * @returns {Promise<Uint8Array>}
-   */
-  async _readAll(socket, timeout) {
-    const reader = socket.readable.getReader();
-    const chunks = [];
-    let total = 0;
-
-    const timer = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Request timed out')), timeout)
-    );
-
-    const readLoop = (async () => {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        chunks.push(value);
-        total += value.length;
-      }
-    })();
-
-    try {
-      await Promise.race([readLoop, timer]);
-    } catch (error) {
-      // Timed out or errored - fall through and return what we have
-    } finally {
-      reader.releaseLock();
-    }
-
-    const merged = new Uint8Array(total);
-    let offset = 0;
-    for (const chunk of chunks) {
-      merged.set(chunk, offset);
-      offset += chunk.length;
-    }
-    return merged;
   }
 
   /**

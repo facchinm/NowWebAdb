@@ -255,6 +255,8 @@ const clearLogs = () => {
 const PROXY_SCOPE = '/adb-proxy/';
 let swRegistration = null;
 let proxyChannel = null;
+let requestQueue = Promise.resolve();
+let hasAutoReloaded = false;
 
 /** Wait for this specific registration's worker to activate. navigator.serviceWorker.ready
  *  can't be used here - it resolves based on whether the *current page* is controlled, and
@@ -283,7 +285,22 @@ const ensureServiceWorker = async () => {
   }
 
   if (!swRegistration) {
-    swRegistration = await navigator.serviceWorker.register('/adb-proxy-sw.js', { scope: PROXY_SCOPE });
+    // A previous version of this proxy registered at scope PROXY_SCOPE. That's
+    // more specific than '/', so the browser would keep matching /adb-proxy/
+    // requests to that stale registration instead of the new root one - clean
+    // it up first.
+    const existing = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(
+      existing
+        .filter((reg) => reg.scope === `${location.origin}${PROXY_SCOPE}`)
+        .map((reg) => reg.unregister())
+    );
+
+    // Registered at root scope (not just PROXY_SCOPE) so the SW can also catch
+    // absolute-path assets the proxied page references (e.g. "/assets/app.js"),
+    // which the browser resolves against the origin root. The SW itself only
+    // proxies requests actually under PROXY_SCOPE or referred by such a page.
+    swRegistration = await navigator.serviceWorker.register('/adb-proxy-sw.js', { scope: '/' });
   }
   await waitForActivation(swRegistration);
   addLog({ type: 'info', text: `Proxy service worker active (scope: ${PROXY_SCOPE})` });
@@ -294,10 +311,22 @@ const ensureServiceWorker = async () => {
   }
 };
 
-const handleProxyChannelMessage = async (event) => {
-  const { type, id, method, path, headers, body } = event.data || {};
+const handleProxyChannelMessage = (event) => {
+  const { type } = event.data || {};
+
+  if (type === 'ADB_PROXY_SKIPPED') {
+    addLog({ type: 'info', text: `Not proxied (no matching referrer): ${event.data.url} (referrer: ${event.data.referrer})` });
+    return;
+  }
   if (type !== 'ADB_PROXY_REQUEST') return;
 
+  // Browsers fire many asset requests in parallel, but the ADB/WebUSB transport
+  // and the device's embedded HTTP server often can't handle concurrent raw
+  // sockets reliably - queue requests and process them one at a time instead.
+  requestQueue = requestQueue.then(() => processProxyRequest(event.data)).catch(() => {});
+};
+
+const processProxyRequest = async ({ id, method, path, headers, body }) => {
   try {
     const response = await adbForwardManager.httpRequest(adbInstance, androidPort.value, path, {
       method,
@@ -316,6 +345,10 @@ const handleProxyChannelMessage = async (event) => {
     });
   } catch (error) {
     proxyChannel.postMessage({ type: 'ADB_PROXY_RESPONSE', id, error: error.message });
+  } finally {
+    // Small cool-down before the next queued request opens its socket - back-to-back
+    // opens right after a close seem to be what actually triggers "Socket open failed".
+    await new Promise((resolve) => setTimeout(resolve, 80));
   }
 };
 
@@ -362,6 +395,7 @@ const startForwarding = async () => {
     if (forwardMode.value === 'http') {
       proxyError.value = '';
       httpProxyReady.value = false;
+      hasAutoReloaded = false;
       await ensureServiceWorker();
       currentPath = '/';
       httpProxyReady.value = true;
@@ -470,11 +504,14 @@ const stopForwarding = () => {
     if (currentForward) {
       adbForwardManager.closeForward(androidPort.value);
     }
+    adbForwardManager.closeHttpConnection(androidPort.value);
 
     currentSocket = null;
     currentForward = null;
     adbInstance = null;
     currentPath = '/';
+    requestQueue = Promise.resolve();
+    hasAutoReloaded = false;
     wsConnected.value = false;
     wsMessages.value = [];
     isForwarding.value = false;
@@ -491,6 +528,16 @@ const stopForwarding = () => {
 
 const onIframeLoad = () => {
   console.log('Iframe proxy loaded');
+
+  // The very first navigation to a fresh SW registration/activation can race:
+  // it's served by the worker, but the resulting document isn't always marked
+  // as a *controlled* client in time for its own sub-resource requests, which
+  // then silently bypass the proxy and hit the real network instead. Forcing
+  // one reload guarantees the second load is fully controlled.
+  if (forwardMode.value === 'http' && !hasAutoReloaded) {
+    hasAutoReloaded = true;
+    iframeKey.value++;
+  }
 };
 
 onUnmounted(() => {

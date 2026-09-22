@@ -8,30 +8,45 @@ export function getAdbInstance() {
     return adbInstance;
 }
 
+// The ADB connection multiplexes everything (shell commands, raw sockets) over
+// a single USB transport. Firing multiple operations concurrently (e.g. the
+// status bar's polling loop racing with the Forwarded Service proxy) causes
+// intermittent "Socket open failed"/transport errors. Serialize all ADB
+// operations through this queue app-wide instead of letting callers race.
+let adbLockQueue = Promise.resolve();
+
+export function withAdbLock(fn) {
+    const result = adbLockQueue.then(fn, fn);
+    adbLockQueue = result.then(() => {}, () => {});
+    return result;
+}
+
 // 执行shell命令
 export async function executeCommand(command) {
     if (!adbInstance) {
         return '';
     }
     try {
-        // 优先使用 shell protocol，如果不支持则使用 none protocol
-        if (adbInstance.subprocess.shellProtocol?.isSupported) {
-            const result = await adbInstance.subprocess.shellProtocol.spawnWaitText(command);
-            return result.stdout;
-        } else {
-            // 使用 none protocol 作为备选
-            const process = await adbInstance.subprocess.noneProtocol.spawn(command);
-            const reader = process.stdout.getReader();
-            const chunks = [];
-            const decoder = new TextDecoder();
+        return await withAdbLock(async () => {
+            // 优先使用 shell protocol，如果不支持则使用 none protocol
+            if (adbInstance.subprocess.shellProtocol?.isSupported) {
+                const result = await adbInstance.subprocess.shellProtocol.spawnWaitText(command);
+                return result.stdout;
+            } else {
+                // 使用 none protocol 作为备选
+                const process = await adbInstance.subprocess.noneProtocol.spawn(command);
+                const reader = process.stdout.getReader();
+                const chunks = [];
+                const decoder = new TextDecoder();
 
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                chunks.push(decoder.decode(value, { stream: true }));
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    chunks.push(decoder.decode(value, { stream: true }));
+                }
+                return chunks.join('');
             }
-            return chunks.join('');
-        }
+        });
     } catch (error) {
         console.error('执行命令出错:', error);
         return '';

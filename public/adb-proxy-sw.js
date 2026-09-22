@@ -13,13 +13,23 @@
  * self.clients.matchAll() / self.clients.get() - those only see pages
  * actually controlled within scope.
  *
+ * This worker is registered at scope '/' (not just PROXY_SCOPE) because
+ * proxied pages commonly reference their own assets with absolute paths
+ * (e.g. "/assets/app.js"), which the browser resolves against the origin
+ * root, not the "/adb-proxy/" prefix the document itself was loaded from.
+ * Requests outside PROXY_SCOPE are only proxied when their Referer shows
+ * they were made by a page under PROXY_SCOPE; everything else (the main
+ * app's own requests) is left untouched. Referrer-Policy is stripped from
+ * proxied responses so that detection keeps working even when the device's
+ * own server sends "no-referrer" or similar.
+ *
  * Security note: content proxied this way runs with this page's own origin,
  * so it can reach the controlling app's DOM via window.parent. Only use this
  * for services you trust.
  */
 
 const CHANNEL_NAME = 'adb-proxy-channel';
-const scopePath = new URL(self.registration.scope).pathname;
+const PROXY_SCOPE = '/adb-proxy/';
 const pending = new Map();
 let requestCounter = 0;
 
@@ -39,13 +49,29 @@ self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim(
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
-  if (!url.pathname.startsWith(scopePath)) return; // not ours, let the network handle it
-  event.respondWith(proxyFetch(event.request));
+  const isUnderProxyScope = url.pathname.startsWith(PROXY_SCOPE);
+  const referredByProxyPage = event.request.referrer?.startsWith(self.location.origin + PROXY_SCOPE);
+
+  if (!isUnderProxyScope && !referredByProxyPage) {
+    // Surface anything that looks like a device asset but wasn't recognized,
+    // so the app's traffic log shows whether requests are truly not
+    // happening vs. silently escaping the proxy.
+    if (url.pathname.startsWith('/assets/') || url.pathname.startsWith('/static/')) {
+      channel.postMessage({ type: 'ADB_PROXY_SKIPPED', url: url.href, referrer: event.request.referrer || '(none)' });
+    }
+    return; // not ours, let the network handle it
+  }
+  event.respondWith(proxyFetch(event.request, isUnderProxyScope));
 });
 
-async function proxyFetch(request) {
+async function proxyFetch(request, isUnderProxyScope) {
   const url = new URL(request.url);
-  const path = url.pathname.slice(scopePath.length - 1) + url.search || '/';
+  // Requests actually under /adb-proxy/ map to the device path by stripping the
+  // prefix; absolute-path assets detected purely via referrer keep their real
+  // path as-is, since that's exactly what the device serves at that path.
+  const path = isUnderProxyScope
+    ? (url.pathname.slice(PROXY_SCOPE.length - 1) + url.search || '/')
+    : (url.pathname + url.search);
 
   const headers = {};
   for (const [key, value] of request.headers.entries()) {
@@ -63,13 +89,15 @@ async function proxyFetch(request) {
     pending.set(id, resolve);
     channel.postMessage({ type: 'ADB_PROXY_REQUEST', id, method: request.method, path, headers, body });
 
-    // Give up if the page never answers (e.g. forwarding was stopped mid-flight)
+    // Give up if the page never answers (e.g. forwarding was stopped mid-flight).
+    // Generous timeout since requests are now processed one at a time on the
+    // page side, so later requests in a burst can wait a while for their turn.
     setTimeout(() => {
       if (pending.has(id)) {
         pending.delete(id);
         resolve({ error: 'Timed out waiting for the app page to service this request' });
       }
-    }, 15000);
+    }, 30000);
   });
 
   if (responseData?.error) {
@@ -82,7 +110,8 @@ async function proxyFetch(request) {
     'x-frame-options',
     'content-encoding',
     'transfer-encoding',
-    'connection'
+    'connection',
+    'referrer-policy'
   ]);
 
   const responseHeaders = new Headers();
