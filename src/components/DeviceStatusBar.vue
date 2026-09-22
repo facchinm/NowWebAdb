@@ -9,7 +9,7 @@
       </div>
       <WiFiDetailPopover v-model:visible="wifiPopoverVisible" :wifi-details="wifiDetails">
         <el-space :size="5" style="cursor: pointer;" class="wifi-container status-item">
-          <SvgIcon icon="wifiIcon" :color="wifiSsid !== '未连接' && wifiSsid !== '--' ? '#409EFF' : '#606266'" :style="{ width:16 + 'px', height: 16 + 'px'}" />
+          <SvgIcon icon="wifiIcon" :color="wifiSsid !== 'Not Connected' && wifiSsid !== '--' ? '#409EFF' : '#606266'" :style="{ width:16 + 'px', height: 16 + 'px'}" />
           <span class="status-text">{{ wifiSsid }}</span>
         </el-space>
       </WiFiDetailPopover>
@@ -68,7 +68,7 @@ const getDeviceInfo = async () => {
   // Get WiFi info using improved method
   try {
     const ssid = await getWifiInfo();
-    wifiSsid.value = ssid || '未连接';
+    wifiSsid.value = ssid || 'Not Connected';
     wifiDetails.value.ssid = ssid || '';
     
     // Get detailed WiFi information

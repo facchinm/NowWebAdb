@@ -1,22 +1,22 @@
 <template>
   <div class="device-control-bar" :style="controlBarStyle" :class="{ 'fullscreen-mode': isFullscreen }">
     <div class="button-container">
-      <el-tooltip effect="dark" content="返回" placement="top">
+      <el-tooltip effect="dark" content="Back" placement="top">
         <el-button @click="handlePress('AndroidBack')">
           <el-icon :size="16"><Back /></el-icon>
         </el-button>
       </el-tooltip>
-      <el-tooltip effect="dark" content="主页" placement="top">
+      <el-tooltip effect="dark" content="Home" placement="top">
         <el-button @click="handlePress('AndroidHome')">
           <el-icon :size="16"><House /></el-icon>
         </el-button>
       </el-tooltip>
-      <el-tooltip effect="dark" content="多任务" placement="top">
+      <el-tooltip effect="dark" content="Multitask" placement="top">
         <el-button @click="handlePress('AndroidAppSwitch')">
           <el-icon :size="16"><CopyDocument /></el-icon>
         </el-button>
       </el-tooltip>
-      <el-tooltip effect="dark" content="菜单" placement="top">
+      <el-tooltip effect="dark" content="Menu" placement="top">
         <el-button @click="handlePress('ContextMenu')">
           <el-icon :size="16"><Menu /></el-icon>
         </el-button>

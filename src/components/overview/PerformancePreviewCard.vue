@@ -2,19 +2,19 @@
   <div class="performance-preview">
     <div class="section-header">
       <SvgIcon icon="CpuIcon" :color="'#E91E63'" :style="{ width: 18 + 'px', height: 18 + 'px'}"/>
-      <span class="section-title">性能预览</span>
+      <span class="section-title">Performance Preview</span>
     </div>
     
     <div class="performance-grid">
       <div class="performance-item">
-        <div class="performance-title">CPU 频率</div>
+        <div class="performance-title">CPU Frequency</div>
         <div class="performance-value">{{ deviceInfo.cpuCur }}</div>
         <div class="chart-container">
           <CpuFrequencyChart :cpu-data="cpuFrequencyData" />
         </div>
       </div>
       <div class="performance-item">
-        <div class="performance-title">内存占用</div>
+        <div class="performance-title">Memory Usage</div>
         <div class="performance-value">{{ Math.round(deviceInfo.memoryUsedRate) }}%</div>
         <div class="chart-container">
           <MemoryUsageChart :memory-data="memoryUsageData" />

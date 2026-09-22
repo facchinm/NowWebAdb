@@ -52,109 +52,109 @@ export const getDeviceInfo = async () => {
       storageType,
       kernelVersion
     ] = await Promise.all([
-      adb.getProp('ro.product.model').catch(() => '未知'),
-      adb.getProp('ro.product.manufacturer').catch(() => '未知'),
-      adb.getProp('ro.build.version.release').catch(() => '未知'),
-      adb.getProp('ro.build.version.sdk').catch(() => '未知'),
+      adb.getProp('ro.product.model').catch(() => 'Unknown'),
+      adb.getProp('ro.product.manufacturer').catch(() => 'Unknown'),
+      adb.getProp('ro.build.version.release').catch(() => 'Unknown'),
+      adb.getProp('ro.build.version.sdk').catch(() => 'Unknown'),
       executeShellCommand(adb, "wm size | grep Physical").catch(() => ''),
-      adb.getProp('ro.sf.lcd_density').catch(() => '未知'),
-      executeShellCommand(adb, "ip addr show wlan0 | grep 'inet ' | cut -d' ' -f6 | cut -d/ -f1").catch(() => '未知'),
+      adb.getProp('ro.sf.lcd_density').catch(() => 'Unknown'),
+      executeShellCommand(adb, "ip addr show wlan0 | grep 'inet ' | cut -d' ' -f6 | cut -d/ -f1").catch(() => 'Unknown'),
       executeShellCommand(adb, "free -m | awk '/Mem:/ {print $2}'").catch(() => '0'),
       executeShellCommand(adb, "free -m | awk '/Mem:/ {print $3}'").catch(() => '0'),
-      adb.getProp('ro.serialno').catch(() => adb.serial || '未知'),
+      adb.getProp('ro.serialno').catch(() => adb.serial || 'Unknown'),
       adb.getProp('ro.hardware').catch(() => '未知'),
       executeShellCommand(adb, 'cat /proc/cpuinfo | grep processor | wc -l').catch(() => '0'),
-      executeShellCommand(adb, 'cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq').catch(() => '未知'),
-      executeShellCommand(adb, 'cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq').catch(() => '未知'),
-      executeShellCommand(adb, 'cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq').catch(() => '未知'),
-      adb.getProp('ro.product.brand').catch(() => '未知'),
-      adb.getProp('ro.product.name').catch(() => '未知'),
-      adb.getProp('ro.product.board').catch(() => '未知'),
-      adb.getProp('ro.build.display.id').catch(() => '未知'),
-      adb.getProp('ro.build.id').catch(() => '未知'),
-      adb.getProp('ro.build.fingerprint').catch(() => '未知'),
-      adb.getProp('ro.build.host').catch(() => '未知'),
+      executeShellCommand(adb, 'cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq').catch(() => 'Unknown'),
+      executeShellCommand(adb, 'cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq').catch(() => 'Unknown'),
+      executeShellCommand(adb, 'cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq').catch(() => 'Unknown'),
+      adb.getProp('ro.product.brand').catch(() => 'Unknown'),
+      adb.getProp('ro.product.name').catch(() => 'Unknown'),
+      adb.getProp('ro.product.board').catch(() => 'Unknown'),
+      adb.getProp('ro.build.display.id').catch(() => 'Unknown'),
+      adb.getProp('ro.build.id').catch(() => 'Unknown'),
+      adb.getProp('ro.build.fingerprint').catch(() => 'Unknown'),
+      adb.getProp('ro.build.host').catch(() => 'Unknown'),
       adb.getProp('ro.hardware').catch(() => '未知'),
-      adb.getProp('ro.product.device').catch(() => '未知'),
-      adb.getProp('ro.build.user').catch(() => '未知'),
-      adb.getProp('gsm.version.baseband').catch(() => '未知'),
-      adb.getProp('ro.build.tags').catch(() => '未知'),
-      adb.getProp('ro.build.type').catch(() => '未知'),
-      adb.getProp('ro.product.cpu.abi').catch(() => '未知'),
-      adb.getProp('ro.product.cpu.abilist').catch(() => '未知'),
-      getWifiInfo().catch(() => '未知'),
+      adb.getProp('ro.product.device').catch(() => 'Unknown'),
+      adb.getProp('ro.build.user').catch(() => 'Unknown'),
+      adb.getProp('gsm.version.baseband').catch(() => 'Unknown'),
+      adb.getProp('ro.build.tags').catch(() => 'Unknown'),
+      adb.getProp('ro.build.type').catch(() => 'Unknown'),
+      adb.getProp('ro.product.cpu.abi').catch(() => 'Unknown'),
+      adb.getProp('ro.product.cpu.abilist').catch(() => 'Unknown'),
+      getWifiInfo().catch(() => 'Unknown'),
       getBatteryInfo().catch(() => ({ percentage: 0, voltage: 0, temperature: 0 })),
-      executeShellCommand(adb, 'getprop ro.boot.verifiedbootstate').catch(() => '未知'),
-      executeShellCommand(adb, 'getprop ro.boot.slot_suffix').catch(() => '未知'),
+      executeShellCommand(adb, 'getprop ro.boot.verifiedbootstate').catch(() => 'Unknown'),
+      executeShellCommand(adb, 'getprop ro.boot.slot_suffix').catch(() => 'Unknown'),
       executeShellCommand(adb, 'cat /proc/uptime | cut -d. -f1').catch(() => '0'),
       getStorageInfo().catch(() => ({ total: '0G', used: '0G', usedRate: 0 })),
-      executeShellCommand(adb, 'getprop ro.boot.bootdevice').catch(() => '未知'),
-      executeShellCommand(adb, 'uname -r').catch(() => '未知')
+      executeShellCommand(adb, 'getprop ro.boot.bootdevice').catch(() => 'Unknown'),
+      executeShellCommand(adb, 'uname -r').catch(() => 'Unknown')
     ]);
 
     // 处理分辨率
-    let formattedResolution = '未知';
+    let formattedResolution = 'Unknown';
     if (resolution) {
       const match = resolution.match(/Physical size: (\d+x\d+)/);
-      formattedResolution = match ? match[1] : '未知';
+      formattedResolution = match ? match[1] : 'Unknown';
     }
 
     // 处理CPU频率
     const formatCpuFreq = (freq) => {
-      if (!freq || freq === '未知') return '未知';
+      if (!freq || freq === 'Unknown') return 'Unknown';
       const freqNum = parseInt(freq.trim(), 10);
-      return freqNum ? `${(freqNum / 1000).toFixed(0)} MHz` : '未知';
+      return freqNum ? `${(freqNum / 1000).toFixed(0)} MHz` : 'Unknown';
     };
 
     // 处理上电时间
     const formatUptime = (seconds) => {
-      if (!seconds || isNaN(parseInt(seconds, 10))) return '未知';
+      if (!seconds || isNaN(parseInt(seconds, 10))) return 'Unknown';
       const uptimeSec = parseInt(seconds.trim(), 10);
       const days = Math.floor(uptimeSec / 86400);
       const hours = Math.floor((uptimeSec % 86400) / 3600);
       const minutes = Math.floor((uptimeSec % 3600) / 60);
-      return `${days}天 ${hours}小时 ${minutes}分钟`;
+      return `${days} days ${hours} hours ${minutes} minutes`;
     };
 
     // 更新设备信息
     return {
       // 系统信息
-      deviceModel: deviceModel || '未知',
-      manufacturer: manufacturer || '未知',
-      androidVersion: androidVersion || '未知',
-      sdkVersionCode: sdkVersionCode || '未知',
+      deviceModel: deviceModel || 'Unknown',
+      manufacturer: manufacturer || 'Unknown',
+      androidVersion: androidVersion || 'Unknown',
+      sdkVersionCode: sdkVersionCode || 'Unknown',
       resolution: formattedResolution,
-      screenDensity: `${screenDensity || '未知'} dpi`,
-      serialNumber: serialNumber || '未知',
-      brand: brand || '未知',
-      product: product || '未知',
-      board: board || '未知',
-      display: display || '未知',
-      id: id || '未知',
-      fingerPrint: fingerPrint || '未知',
-      host: host || '未知',
-      hardware: hardware || '未知',
-      device: device || '未知',
-      user: user || '未知',
-      radioVersion: radioVersion || '未知',
-      tags: tags || '未知',
-      type: type || '未知',
-      bootloader: bootloader || '未知',
+      screenDensity: `${screenDensity || 'Unknown'} dpi`,
+      serialNumber: serialNumber || 'Unknown',
+      brand: brand || 'Unknown',
+      product: product || 'Unknown',
+      board: board || 'Unknown',
+      display: display || 'Unknown',
+      id: id || 'Unknown',
+      fingerPrint: fingerPrint || 'Unknown',
+      host: host || 'Unknown',
+      hardware: hardware || 'Unknown',
+      device: device || 'Unknown',
+      user: user || 'Unknown',
+      radioVersion: radioVersion || 'Unknown',
+      tags: tags || 'Unknown',
+      type: type || 'Unknown',
+      bootloader: bootloader || 'Unknown',
       abPartition: abPartition || '无',
-      kernelVersion: kernelVersion || '未知',
+      kernelVersion: kernelVersion || 'Unknown',
       
       // 网络信息
-      ipAddress: ipAddress || '未知',
-      wifiName: wifiName || '未连接',
+      ipAddress: ipAddress || 'Unknown',
+      wifiName: wifiName || 'Not Connected',
       
       // 硬件信息
-      cpuInfo: cpuInfo || '未知',
-      cpuCore: cpuCore ? `${cpuCore.trim()} 核` : '未知',
+      cpuInfo: cpuInfo || 'Unknown',
+      cpuCore: cpuCore ? `${cpuCore.trim()} cores` : 'Unknown',
       cpuMin: formatCpuFreq(cpuMin),
       cpuMax: formatCpuFreq(cpuMax),
       cpuCur: formatCpuFreq(cpuCur),
-      cpuAbi: cpuAbi || '未知',
-      abis: abis || '未知',
+      cpuAbi: cpuAbi || 'Unknown',
+      abis: abis || 'Unknown',
       
       // 电池信息
       batteryPercentage: batteryInfo.percentage || 0,
@@ -168,7 +168,7 @@ export const getDeviceInfo = async () => {
       totalStorage: storageInfo.total || '0G',
       usedStorage: storageInfo.used || '0G',
       storageUsedRate: storageInfo.usedRate || 0,
-      storageType: storageType || '未知',
+      storageType: storageType || 'Unknown',
       
       // 运行信息
       uptime: formatUptime(uptime)
@@ -246,7 +246,7 @@ export const getWifiInfo = async () => {
     }
   }
 
-  return '未知';
+  return 'Unknown';
 };
 
 /**

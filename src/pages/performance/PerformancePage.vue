@@ -8,10 +8,10 @@
           <div class="left-panel">
             <div class="settings-group">
               <div class="setting-item">
-                <div class="label"><el-icon><Menu /></el-icon> 监控应用</div>
+                <div class="label"><el-icon><Menu /></el-icon> Monitor App</div>
                 <el-select 
                   v-model="selectedPackage"
-                  placeholder="选择一个应用开始监控"
+                  placeholder="Select an app to start monitoring"
                   :disabled="isMonitoring"
                   filterable
                   class="full-width"
@@ -34,10 +34,10 @@
               
               <!-- 新增PID选择 -->
               <div class="setting-item" v-if="processList.length > 0">
-                <div class="label"><el-icon><Phone /></el-icon> 选择进程</div>
+                <div class="label"><el-icon><Phone /></el-icon> Select Process</div>
                 <el-select 
                   v-model="selectedPid"
-                  placeholder="选择应用进程"
+                  placeholder="Select App Process"
                   :disabled="isMonitoring"
                   class="full-width"
                 >
@@ -51,16 +51,16 @@
               </div>
               
               <div class="setting-item">
-                <div class="label"><el-icon><Timer /></el-icon> 采集间隔</div>
+                <div class="label"><el-icon><Timer /></el-icon> Collection Interval</div>
                 <el-select 
                   v-model="collectionInterval"
                   :disabled="isMonitoring"
                   style="width: 150px"
                 >
-                  <el-option label="1 秒" value="1000" />
-                  <el-option label="2 秒" value="2000" />
-                  <el-option label="5 秒" value="5000" />
-                  <el-option label="10 秒" value="10000" />
+                  <el-option label="1 second" value="1000" />
+                  <el-option label="2 seconds" value="2000" />
+                  <el-option label="5 seconds" value="5000" />
+                  <el-option label="10 seconds" value="10000" />
                 </el-select>
                 <el-button
                   type="warning"
@@ -68,7 +68,7 @@
                   :disabled="isLoading || isMonitoring"
                   :loading="isLoading"
                   :icon="Timer"
-                >刷新应用列表
+                                >Refresh App List
                 </el-button>
                 <el-button
                   type="success"
@@ -76,23 +76,23 @@
                   :disabled="isLoading"
                   :loading="isGettingCurrentApp"
                   :icon="Search"
-                >获取当前应用
+                                >Get Current App
                 </el-button>
               </div>
               <div class="setting-item">
-                <div class="label"><el-icon><DataAnalysis /></el-icon> 采集上限</div>
+                <div class="label"><el-icon><DataAnalysis /></el-icon> Collection Limit</div>
                 <el-select 
                   v-model="localMaxDataPoints"
                   :disabled="isMonitoring"
                   style="width: 150px"
                   @change="updateMaxDataPoints"
                 >
-                  <el-option label="300 条 (默认)" :value="300" />
-                  <el-option label="500 条" :value="500" />
-                  <el-option label="1000 条" :value="1000" />
-                  <el-option label="2000 条" :value="2000" />
-                  <el-option label="5000 条" :value="5000" />
-                  <el-option label="不限制" :value="0" />
+                  <el-option label="300 records (default)" :value="300" />
+                  <el-option label="500 records" :value="500" />
+                  <el-option label="1000 records" :value="1000" />
+                  <el-option label="2000 records" :value="2000" />
+                  <el-option label="5000 records" :value="5000" />
+                  <el-option label="No limit" :value="0" />
                 </el-select>
                 <el-tooltip content="采集上限越打占用内存越大，不限制可能导致长时间监控时内存占用过高" placement="top">
                   <el-icon class="info-icon"><InfoFilled /></el-icon>
@@ -119,7 +119,7 @@
               <template v-else>
                 <div class="idle-status">
                   <el-icon><InfoFilled /></el-icon>
-                  <span>待机中，请选择应用并开始监控</span>
+                  <span>Idle, please select an app and start monitoring</span>
                 </div>
               </template>
             </div>
@@ -135,7 +135,7 @@
                   class="action-btn"
                 >
                   <el-icon class="mx-2"><VideoPlay /></el-icon>
-                  开始监控
+                  Start Monitoring
                 </el-button>
                 <el-button 
                   v-else 
@@ -144,7 +144,7 @@
                   class="action-btn"
                 >
                   <el-icon class="mx-2"><VideoPause /></el-icon>
-                  停止监控
+                  Stop Monitoring
                 </el-button>
                 <el-button 
                   type="success"
@@ -153,7 +153,7 @@
                   class="action-btn"
                 >
                   <el-icon class="mx-2"><Download /></el-icon>
-                  导出报告
+                  Export Report
                 </el-button>
               </div>
             </div>
@@ -164,22 +164,22 @@
         <el-divider v-if="isMonitoring" />
         <el-row :gutter="20" v-if="isMonitoring" class="live-stats">
           <el-col :span="6">
-            <el-statistic title="CPU 使用率" :value="latestCpu">
+            <el-statistic title="CPU Usage" :value="latestCpu">
               <template #suffix>%</template>
             </el-statistic>
           </el-col>
           <el-col :span="6">
-            <el-statistic title="内存占用" :value="latestMemory">
+            <el-statistic title="Memory Usage" :value="latestMemory">
               <template #suffix>MB</template>
             </el-statistic>
           </el-col>
           <el-col :span="6">
-            <el-statistic title="实时帧率" :value="latestFps">
+            <el-statistic title="Real-time FPS" :value="latestFps">
                <template #suffix>FPS</template>
             </el-statistic>
           </el-col>
           <el-col :span="6">
-            <el-statistic title="电池温度" :value="latestTemp">
+            <el-statistic title="Battery Temperature" :value="latestTemp">
               <template #suffix>°C</template>
             </el-statistic>
           </el-col>
@@ -188,42 +188,42 @@
             <el-card class="foreground-app-card" shadow="never">
               <template #header>
                 <div class="card-header">
-                  <span class="title">当前前台应用</span>
+                  <span class="title">Current Foreground App</span>
                   <el-tag
                     :type="currentForegroundApp.packageName ? 'success' : 'info'"
                     size="small"
                   >
-                    {{ currentForegroundApp.packageName ? '已检测' : '未检测' }}
+                    {{ currentForegroundApp.packageName ? 'Detected' : 'Not Detected' }}
                   </el-tag>
                 </div>
               </template>
 
               <div v-if="currentForegroundApp.packageName" class="app-details">
                 <div class="detail-row">
-                  <span class="label">应用名称:</span>
-                  <span class="value">{{ currentForegroundApp.appName || '未知' }}</span>
+                  <span class="label">App Name:</span>
+                  <span class="value">{{ currentForegroundApp.appName || 'Unknown' }}</span>
                 </div>
                 <div class="detail-row">
-                  <span class="label">应用类型:</span>
+                  <span class="label">App Type:</span>
                   <el-tag
                     size="small"
                     :type="currentForegroundApp.isSystemApp ? 'warning' : 'success'"
                   >
-                    {{ currentForegroundApp.isSystemApp ? '系统应用' : '第三方应用' }}
+                    {{ currentForegroundApp.isSystemApp ? 'System App' : 'Third Party App' }}
                   </el-tag>
                 </div>
                 <div class="detail-row">
-                  <span class="label">包名:</span>
+                  <span class="label">Package Name:</span>
                   <span class="value">{{ currentForegroundApp.packageName }}</span>
                 </div>
                 <div class="detail-row">
-                  <span class="label">进程ID:</span>
-                  <span class="value">{{ currentForegroundApp.pid || '未知' }}</span>
+                  <span class="label">Process ID:</span>
+                  <span class="value">{{ currentForegroundApp.pid || 'Unknown' }}</span>
                 </div>
               </div>
 
               <div v-else class="no-app">
-                <span class="no-app-text">未检测到前台应用</span>
+                <span class="no-app-text">No foreground app detected</span>
               </div>
             </el-card>
           </el-col>
@@ -232,7 +232,7 @@
             <div class="data-point-info">
               <el-icon><InfoFilled /></el-icon>
               <span>
-                已采集 {{ performanceStore.timeStamps.length }} 条数据
+                Collected {{ performanceStore.timeStamps.length }} records
                 {{ performanceStore.maxDataPoints > 0 ? `(最大 ${performanceStore.maxDataPoints} 个)` : '(无限制)' }}，
                 图表显示最近60条数据，导出将包含全部数据。
               </span>
@@ -248,14 +248,14 @@
           <el-card class="chart-card">
             <template #header>
               <div class="card-header">
-                <h5 class="card-title">CPU使用率</h5>
+                <h5 class="card-title">CPU Usage</h5>
               </div>
             </template>
             <div class="chart-placeholder">
               <div v-if="!isMonitoring" class="chart-empty-state">
                 <div class="empty-chart-container">
                   <el-icon class="empty-icon"><Cpu /></el-icon>
-                  <div class="empty-text">启动监控后将显示CPU使用率图表</div>
+                  <div class="empty-text">Start monitoring to display CPU usage chart</div>
                 </div>
               </div>
               <CpuChart v-else />
@@ -268,14 +268,14 @@
           <el-card class="chart-card">
             <template #header>
               <div class="card-header">
-                <h5 class="card-title">内存使用</h5>
+                <h5 class="card-title">Memory Usage</h5>
               </div>
             </template>
             <div class="chart-placeholder">
               <div v-if="!isMonitoring" class="chart-empty-state">
                 <div class="empty-chart-container">
                   <el-icon class="empty-icon"><Histogram /></el-icon>
-                  <div class="empty-text">启动监控后将显示内存使用图表</div>
+                  <div class="empty-text">Start monitoring to display memory usage chart</div>
                 </div>
               </div>
               <MemoryChart v-else />
@@ -295,7 +295,7 @@
               <div v-if="!isMonitoring" class="chart-empty-state">
                 <div class="empty-chart-container">
                   <el-icon class="empty-icon"><DataAnalysis /></el-icon>
-                  <div class="empty-text">启动监控后将显示FPS图表</div>
+                  <div class="empty-text">Start monitoring to display FPS chart</div>
                 </div>
               </div>
               <FpsChart v-else />
@@ -308,14 +308,14 @@
           <el-card class="chart-card">
             <template #header>
               <div class="card-header">
-                <h5 class="card-title">网络流量</h5>
+                <h5 class="card-title">Network Traffic</h5>
               </div>
             </template>
             <div class="chart-placeholder">
               <div v-if="!isMonitoring" class="chart-empty-state">
                 <div class="empty-chart-container">
                   <el-icon class="empty-icon"><Connection /></el-icon>
-                  <div class="empty-text">启动监控后将显示网络流量图表</div>
+                  <div class="empty-text">Start monitoring to display network traffic chart</div>
                 </div>
               </div>
               <NetworkChart v-else />
@@ -328,14 +328,14 @@
           <el-card class="chart-card">
             <template #header>
               <div class="card-header">
-                <h5 class="card-title">电池电量</h5>
+                <h5 class="card-title">Battery Level</h5>
               </div>
             </template>
             <div class="chart-placeholder">
               <div v-if="!isMonitoring" class="chart-empty-state">
                 <div class="empty-chart-container">
                   <el-icon class="empty-icon"><Odometer /></el-icon>
-                  <div class="empty-text">启动监控后将显示电池电量图表</div>
+                  <div class="empty-text">Start monitoring to display battery level chart</div>
                 </div>
               </div>
               <BatteryChart v-else />
@@ -348,14 +348,14 @@
           <el-card class="chart-card">
             <template #header>
               <div class="card-header">
-                <h5 class="card-title">电池温度</h5>
+                <h5 class="card-title">Battery Temperature</h5>
               </div>
             </template>
             <div class="chart-placeholder">
               <div v-if="!isMonitoring" class="chart-empty-state">
                 <div class="empty-chart-container">
                   <el-icon class="empty-icon"><Odometer /></el-icon>
-                  <div class="empty-text">启动监控后将显示电池温度图表</div>
+                  <div class="empty-text">Start monitoring to display battery temperature chart</div>
                 </div>
               </div>
               <TemperatureChart v-else />
@@ -561,11 +561,11 @@ const onAppSelected = async (packageName) => {
       selectedPid.value = processes[0].pid;
     } else {
       selectedPid.value = '';
-      ElMessage.warning(`未找到应用 ${packageName} 的进程`);
+      ElMessage.warning(`App ${packageName} process not found`);
     }
   } catch (error) {
     console.error('获取进程列表失败:', error);
-    ElMessage.error('获取进程列表失败');
+    ElMessage.error('Failed to get process list');
     processList.value = [];
     selectedPid.value = '';
   } finally {
@@ -599,11 +599,11 @@ const startMonitoring = async () => {
       
       ElMessage.success(`已开始监控 ${selectedPackage.value}`);
     } else {
-      ElMessage.error('启动监控失败');
+      ElMessage.error('Failed to start monitoring');
     }
   } catch (error) {
     console.error('启动监控时出错:', error);
-    ElMessage.error('启动监控失败: ' + error.message);
+    ElMessage.error('Failed to start monitoring: ' + error.message);
   } finally {
     isLoading.value = false;
   }

@@ -112,7 +112,7 @@ const useScrcpy = () => {
         } catch (error) {
             console.error('初始化 scrcpy 时出错:', error);
             connectionStatus.value = 'error';
-            connectionError.value = `连接错误: ${error.message || '未知错误'}`;
+            connectionError.value = `Connection Error: ${error.message || 'Unknown Error'}`;
         }
     };
 
@@ -169,7 +169,7 @@ const useScrcpy = () => {
             })).catch(e => {
                 console.error('output stream error:', e);
                 connectionStatus.value = 'error';
-                connectionError.value = `输出流错误: ${e.message || '未知错误'}`;
+                connectionError.value = `Output Stream Error: ${e.message || 'Unknown Error'}`;
             });
 
             // 获取视频流
@@ -193,7 +193,7 @@ const useScrcpy = () => {
         } catch (error) {
             console.error('启动 scrcpy 客户端时出错:', error);
             connectionStatus.value = 'error';
-            connectionError.value = `客户端错误: ${error.message || '未知错误'}`;
+            connectionError.value = `Client Error: ${error.message || 'Unknown Error'}`;
             throw error;
         }
     };

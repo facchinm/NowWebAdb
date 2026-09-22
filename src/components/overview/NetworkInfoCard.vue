@@ -2,7 +2,7 @@
   <div class="info-section">
     <div class="section-header">
       <SvgIcon icon="wifiIcon" :color="'#FF9800'" :style="{ width: 18 + 'px', height: 18 + 'px'}"/>
-      <span class="section-title">网络信息</span>
+      <span class="section-title">Network Information</span>
     </div>
     
     <div class="info-content">
@@ -11,13 +11,13 @@
         <div class="info-value">{{ deviceInfo.wifiName }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">IP 地址</div>
+        <div class="info-label">IP Address</div>
         <div class="info-value">{{ deviceInfo.ipAddress }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">无线电版本</div>
+        <div class="info-label">Radio Version</div>
         <el-tooltip :content="deviceInfo.radioVersion" placement="top" :disabled="!deviceInfo.radioVersion || deviceInfo.radioVersion.length < 30">
-          <div class="info-value text-ellipsis">{{ deviceInfo.radioVersion || '未知' }}</div>
+          <div class="info-value text-ellipsis">{{ deviceInfo.radioVersion || 'Unknown' }}</div>
         </el-tooltip>
       </div>
     </div>

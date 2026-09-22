@@ -2,36 +2,36 @@
   <div class="info-section">
     <div class="section-header">
       <SvgIcon icon="CpuIcon" :color="'#2196F3'" :style="{ width: 18 + 'px', height: 18 + 'px'}"/>
-      <span class="section-title">硬件信息</span>
+      <span class="section-title">Hardware Information</span>
     </div>
     
     <div class="info-grid">
       <div class="info-item">
-        <div class="info-label">CPU 信息</div>
+        <div class="info-label">CPU Information</div>
         <div class="info-value">{{ deviceInfo.cpuInfo }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">CPU 核心数</div>
+        <div class="info-label">CPU Cores</div>
         <div class="info-value">{{ deviceInfo.cpuCore }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">主板</div>
+        <div class="info-label">Motherboard</div>
         <div class="info-value">{{ deviceInfo.board }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">硬件</div>
+        <div class="info-label">Hardware</div>
         <div class="info-value">{{ deviceInfo.hardware }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">CPU 最小频率</div>
+        <div class="info-label">CPU Min Frequency</div>
         <div class="info-value">{{ deviceInfo.cpuMin }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">CPU 最大频率</div>
+        <div class="info-label">CPU Max Frequency</div>
         <div class="info-value">{{ deviceInfo.cpuMax }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">CPU 当前频率</div>
+        <div class="info-label">CPU Current Frequency</div>
         <div class="info-value">{{ deviceInfo.cpuCur }}</div>
       </div>
       <div class="info-item">
@@ -39,35 +39,35 @@
         <div class="info-value">{{ deviceInfo.cpuAbi }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">支持的 ABIs</div>
+        <div class="info-label">Supported ABIs</div>
         <el-tooltip :content="deviceInfo.abis" placement="top" :disabled="!deviceInfo.abis || deviceInfo.abis.length < 15">
           <div class="info-value text-ellipsis">{{ deviceInfo.abis }}</div>
         </el-tooltip>
       </div>
       <div class="info-item">
-        <div class="info-label">存储类型</div>
+        <div class="info-label">Storage Type</div>
         <el-tooltip :content="deviceInfo.storageType" placement="top" :disabled="!deviceInfo.storageType || deviceInfo.storageType.length < 15">
           <div class="info-value text-ellipsis">{{ deviceInfo.storageType }}</div>
         </el-tooltip>
       </div>
       <div class="info-item">
-        <div class="info-label">屏幕分辨率</div>
+        <div class="info-label">Screen Resolution</div>
         <div class="info-value">{{ deviceInfo.resolution }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">屏幕密度</div>
+        <div class="info-label">Screen Density</div>
         <div class="info-value">{{ deviceInfo.screenDensity }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">存储空间</div>
+        <div class="info-label">Storage</div>
         <div class="info-value">{{ deviceInfo.totalStorage }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">内存大小</div>
+        <div class="info-label">Memory Size</div>
         <div class="info-value">{{ deviceInfo.totalMemory }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">构建主机</div>
+        <div class="info-label">Build Host</div>
         <el-tooltip :content="deviceInfo.host" placement="top" :disabled="!deviceInfo.host || deviceInfo.host.length < 15">
           <div class="info-value text-ellipsis">{{ deviceInfo.host }}</div>
         </el-tooltip>

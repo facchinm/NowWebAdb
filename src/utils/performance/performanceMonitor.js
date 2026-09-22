@@ -217,7 +217,7 @@ class PerformanceMonitor {
       } else {
         this.performanceStore.addDataPoint('cpuApp', null, timestamp, false);
         this.performanceStore.addDataPoint('cpuSystem', null, timestamp, false);
-        console.warn('采集CPU数据失败:', cpuResult.reason || '未知错误');
+        console.warn('Failed to collect CPU data:', cpuResult.reason || 'Unknown Error');
       }
 
       // --- 内存 ---
@@ -225,13 +225,13 @@ class PerformanceMonitor {
         this.performanceStore.addDataPoint('memoryTotal', memoryResult.value.totalPss, timestamp, false);
       } else {
         this.performanceStore.addDataPoint('memoryTotal', null, timestamp, false);
-        console.warn('采集内存数据失败:', memoryResult.reason || '未知错误');
+        console.warn('Failed to collect memory data:', memoryResult.reason || 'Unknown Error');
       }
       if (detailedMemoryResult.status === 'fulfilled' && detailedMemoryResult.value) {
         this.performanceStore.addDataPoint('memoryDetail', detailedMemoryResult.value, timestamp, false);
       } else {
         this.performanceStore.addDataPoint('memoryDetail', null, timestamp, false);
-        console.warn('采集详细内存数据失败:', detailedMemoryResult.reason || '未知错误');
+        console.warn('Failed to collect detailed memory data:', detailedMemoryResult.reason || 'Unknown Error');
       }
 
       // --- 电池 ---
@@ -241,7 +241,7 @@ class PerformanceMonitor {
       } else {
         this.performanceStore.addDataPoint('batteryLevel', null, timestamp, false);
         this.performanceStore.addDataPoint('batteryTemperature', null, timestamp, false);
-        console.warn('采集电池数据失败:', batteryResult.reason || '未知错误');
+        console.warn('Failed to collect battery data:', batteryResult.reason || 'Unknown Error');
       }
 
       // --- 网络 ---
@@ -251,7 +251,7 @@ class PerformanceMonitor {
       } else {
         this.performanceStore.addDataPoint('networkRx', null, timestamp, false);
         this.performanceStore.addDataPoint('networkTx', null, timestamp, false);
-        console.warn('采集网络数据失败:', networkResult.reason || '未知错误');
+        console.warn('Failed to collect network data:', networkResult.reason || 'Unknown Error');
       }
 
       // --- FPS ---
@@ -261,7 +261,7 @@ class PerformanceMonitor {
       } else {
         this.performanceStore.addDataPoint('fps', null, timestamp, false);
         this.performanceStore.addDataPoint('jankCount', null, timestamp, false);
-        console.warn('采集FPS数据失败:', fpsResult.reason || '未知错误');
+        console.warn('Failed to collect FPS data:', fpsResult.reason || 'Unknown Error');
       }
 
       // --- 前台应用 ---
@@ -269,7 +269,7 @@ class PerformanceMonitor {
         this.performanceStore.addDataPoint('foregroundApp', foregroundAppResult.value, timestamp, false);
       } else {
         this.performanceStore.addDataPoint('foregroundApp', null, timestamp, false);
-        console.warn('采集前台应用数据失败:', foregroundAppResult.reason || '未知错误');
+        console.warn('Failed to collect foreground app data:', foregroundAppResult.reason || 'Unknown Error');
       }
 
       // 4. 检查数据对齐情况

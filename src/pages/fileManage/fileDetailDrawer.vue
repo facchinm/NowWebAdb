@@ -5,11 +5,11 @@
         <el-icon :size="20">
           <Warning/>
         </el-icon>
-        <span>详细信息</span>
+        <span>Details</span>
       </el-space>
     </template>
     <el-text size="large">
-      文件名称
+      File Name
       <el-icon style="cursor: pointer;margin-left: 7px">
         <CopyDocument/>
       </el-icon>
@@ -18,7 +18,7 @@
       {{ nowFileInfo.name }}
     </div>
     <el-text size="large">
-      位置
+      Location
       <el-icon style="cursor: pointer;margin-left: 7px">
         <CopyDocument/>
       </el-icon>
@@ -27,54 +27,54 @@
       {{ nowFileInfo.path }}
     </div>
     <el-text size="large">
-      类型
+      Type
     </el-text>
     <div class="my-3 fw-bold">
-      <span v-if="nowFileInfo.type === 4">文件夹</span>
-      <span v-else-if="nowFileInfo.type === 8">文件</span>
-      <span v-else-if="nowFileInfo.type === 10">软链接</span>
-      <span v-else>未知</span>
+      <span v-if="nowFileInfo.type === 4">Folder</span>
+      <span v-else-if="nowFileInfo.type === 8">File</span>
+      <span v-else-if="nowFileInfo.type === 10">Soft Link</span>
+      <span v-else>Unknown</span>
     </div>
     <div v-if="nowFileInfo.type === 8">
       <el-text size="large">
-        大小
+        Size
       </el-text>
       <div class="my-3 fw-bold">
         {{ formatSize(nowFileInfo.size) }}
       </div>
     </div>
     <el-text size="large">
-      创建时间
+      Created Time
     </el-text>
     <div class="my-3 fw-bold">
       {{ nowFileInfo.createTime }}
     </div>
     <el-text size="large">
-      修改时间
+      Modified Time
     </el-text>
     <div class="my-3 fw-bold">
       {{ nowFileInfo.modifyTime }}
     </div>
     <el-text size="large">
-      最后访问时间
+      Last Access Time
     </el-text>
     <div class="my-3 fw-bold">
       {{ nowFileInfo.accessTime }}
     </div>
     <el-text size="large">
-      所有者
+      Owner
     </el-text>
     <div class="my-3 fw-bold">
       {{ nowFileInfo.uid }}
     </div>
     <el-text size="large">
-      用户组
+      User Group
     </el-text>
     <div class="my-3 fw-bold">
       {{ nowFileInfo.gid }}
     </div>
     <el-text size="large">
-      权限
+      Permissions
     </el-text>
     <div class="my-3 fw-bold">
       {{ nowFileInfo.permissions }}

@@ -1,40 +1,40 @@
 <template>
   <div v-if="connectStatus === 'disconnected'">
     <div class="d-flex justify-content-center homeTitle">
-      <h1>设备配对</h1>
+      <h1>Device Pairing</h1>
     </div>
     <div class="d-flex justify-content-center my-4">
-      <h4>选择并验证设备</h4>
+      <h4>Select and Verify Device</h4>
     </div>
   </div>
   <div v-else-if="connectStatus === 'autoConnecting'">
     <div class="d-flex justify-content-center homeTitle">
-      <h2 class="mb-5">正在自动连接
+      <h2 class="mb-5">Auto-connecting
         <span class="fw-bold" style="font-size: 25px;color: #409EFF">{{ devicesName }}</span>
       </h2>
     </div>
     <div class="d-flex justify-content-center my-4">
-      <span class="fw-bold">正在自动连接设备，请稍候…</span>
+      <span class="fw-bold">Auto-connecting device, please wait...</span>
     </div>
   </div>
   <div v-else-if="connectStatus === 'connectConfirming'">
     <div class="d-flex justify-content-center homeTitle">
-      <h2 class="mb-5">正在连接
+      <h2 class="mb-5">Connecting
         <span class="fw-bold" style="font-size: 25px;color: #409EFF">{{ devicesName }}</span>
       </h2>
     </div>
     <div class="d-flex justify-content-center my-4">
-      <span class="fw-bold">请在手机的允许调试弹窗中勾选一律允许复选框，并点击允许按钮</span>
+      <span class="fw-bold">Please check 'Always Allow' in the USB debugging permission dialog on your phone and click Allow</span>
     </div>
   </div>
   <div v-else>
     <div class="d-flex justify-content-center homeTitle">
-      <h2 class="mb-5">正在连接
+      <h2 class="mb-5">Connecting
         <span class="fw-bold" style="font-size: 25px;color: #409EFF">{{ devicesName }}</span>
       </h2>
     </div>
     <div class="d-flex justify-content-center my-4">
-      <span class="fw-bold">正在连接设备，请稍候…</span>
+      <span class="fw-bold">Connecting device, please wait...</span>
     </div>
   </div>
   <div class="d-flex justify-content-center">
@@ -56,23 +56,23 @@
       </div>
       <div v-if="connectStatus === 'disconnected'">
         <div class="d-flex justify-content-center">
-          <span>使用USB线连接设备</span>
+          <span>Connect device with USB cable</span>
         </div>
         <div class="d-flex justify-content-center my-2">
-          <span>然后在弹出窗口中连接</span>
+          <span>Then connect in the popup window</span>
         </div>
         <div class="d-flex justify-content-center my-4">
-          <el-button type="primary" @click="connectDevice">连接设备</el-button>
+          <el-button type="primary" @click="connectDevice">Connect Device</el-button>
         </div>
         <div class="d-flex justify-content-center my-2" v-if="!hasStoredDevices">
           <el-alert 
-            title="自动连接提示" 
+            title="Auto-Connect Tip" 
             type="info" 
             show-icon
             :closable="false"
             style="max-width: 400px;">
             <template #default>
-              首次连接成功后，下次访问将自动连接已授权的设备
+              After the first successful connection, subsequent visits will automatically connect to authorized devices
             </template>
           </el-alert>
         </div>
@@ -80,16 +80,16 @@
     </el-card>
   </div>
 
-  <!-- 多设备选择弹窗 -->
+  <!-- Select Device to Connect -->
   <el-dialog
     v-model="showDeviceSelector"
-    title="选择连接设备"
+    title="Select Device to Connect"
     width="500px"
     :close-on-click-modal="false"
     :close-on-press-escape="false"
   >
     <div style="margin-bottom: 20px;">
-      <span style="color: #666;">检测到多个已授权设备，请选择要连接的设备：</span>
+      <span style="color: #666;">Multiple authorized devices detected. Please select the device to connect:</span>
     </div>
     <div v-for="device in availableDevices" :key="device.index" style="margin-bottom: 10px;">
       <el-card
@@ -112,9 +112,9 @@
     </div>
     <template #footer>
       <span class="dialog-footer">
-        <el-button @click="cancelDeviceSelection">取消</el-button>
+        <el-button @click="cancelDeviceSelection">Cancel</el-button>
         <el-button type="primary" @click="connectSelectedDevice" :disabled="!selectedDevice">
-          连接设备
+          Connect Device
         </el-button>
       </span>
     </template>
@@ -269,7 +269,7 @@ const tryAutoConnect = async () => {
     // 如果有多个设备，显示选择弹窗
     if (devices.length > 1) {
       availableDevices.value = devices.map((d, idx) => ({
-        name: d.productName || d.name || '未知设备',
+        name: d.productName || d.name || 'Unknown Device',
         vendorId: d.vendorId,
         productId: d.productId,
         index: idx
@@ -283,7 +283,7 @@ const tryAutoConnect = async () => {
     
     // 只有一个设备，直接连接
     const device = devices[0];
-    devicesName.value = device.productName || device.name || '未知设备';
+    devicesName.value = device.productName || device.name || 'Unknown Device';
     
     setTimeout(() => {
       changeColor();

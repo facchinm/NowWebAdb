@@ -108,7 +108,7 @@ const updateDeviceInfo = async () => {
  */
 const handleConnectionError = () => {
   ElNotification.error({
-    title: '连接断开',
+    title: 'Connection Disconnected',
     message: '连接已断开，请重新连接',
     type: 'error',
     duration: 3000

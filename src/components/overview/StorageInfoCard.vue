@@ -2,18 +2,18 @@
   <div class="info-section">
     <div class="section-header">
       <SvgIcon icon="StorageIcon" :color="'#9C27B0'" :style="{ width: 18 + 'px', height: 18 + 'px'}"/>
-      <span class="section-title">存储信息</span>
+      <span class="section-title">Storage Information</span>
     </div>
     
     <div class="info-content">
       <div class="info-item">
-        <div class="info-label">存储类型</div>
+        <div class="info-label">Storage Type</div>
         <el-tooltip :content="deviceInfo.storageType" placement="top" :disabled="!deviceInfo.storageType || deviceInfo.storageType.length < 30">
-          <div class="info-value text-ellipsis">{{ deviceInfo.storageType || '未知' }}</div>
+          <div class="info-value text-ellipsis">{{ deviceInfo.storageType || 'Unknown' }}</div>
         </el-tooltip>
       </div>
       <div class="info-item">
-        <div class="info-label">存储空间使用</div>
+        <div class="info-label">Storage Usage</div>
         <div class="info-value storage-display">
           <div class="storage-details-row">
             <span>{{ deviceInfo.usedStorage }}/{{ deviceInfo.totalStorage }} ({{ deviceInfo.storageUsedRate }}%)</span>
@@ -28,7 +28,7 @@
         </div>
       </div>
       <div class="info-item">
-        <div class="info-label">内存使用</div>
+        <div class="info-label">Memory Usage</div>
         <div class="info-value storage-display">
           <div class="storage-details-row">
             <span>{{ deviceInfo.usedMemory }}/{{ deviceInfo.totalMemory }} ({{ Math.round(deviceInfo.memoryUsedRate) }}%)</span>

@@ -9,7 +9,7 @@ import basicSsl from '@vitejs/plugin-basic-ssl';
 // https://vitejs.dev/config/
 export default defineConfig({
     server: {
-        https: true,
+        https: false,
         host: '0.0.0.0',
         port: 5173,
         open: true

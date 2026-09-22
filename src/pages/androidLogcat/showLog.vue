@@ -4,7 +4,7 @@
       <div class="d-flex align-center flex-grow-1">
         <el-select
           v-model="selectedPriority"
-          placeholder="日志级别"
+          placeholder="Log Level"
           style="width: 150px"
         >
           <el-option
@@ -16,13 +16,13 @@
         </el-select>
         <el-input
           v-model="tagFilter"
-          placeholder="标签过滤"
+          placeholder="Tag Filter"
           class="mx-3"
           style="width: 150px"
         />
         <el-input
           v-model="searchQuery"
-          placeholder="搜索日志"
+          placeholder="Search Logs"
           class="flex-grow-1"
           style="max-width: 450px"
         />
@@ -36,7 +36,7 @@
             <VideoPlay v-if="!isRunning" />
             <VideoPause v-else />
           </el-icon>
-          {{ isRunning ? '停止' : '开始' }}
+          {{ isRunning ? 'Stop' : 'Start' }}
         </el-button>
         <el-button
           type="info"
@@ -44,7 +44,7 @@
           @click="clearLogs"
         >
           <el-icon class="mx-1"><Delete /></el-icon>
-          清除
+          Clear
         </el-button>
         <el-button
           :disabled="filteredLogs.length === 0"
@@ -53,17 +53,17 @@
           @click="exportLogs"
         >
           <el-icon class="mx-1"><Download /></el-icon>
-          导出
+          Export
         </el-button>
       </div>
     </div>
 
     <div class="log-container">
       <div class="log-header">
-        <div class="log-cell time">时间</div>
-        <div class="log-cell priority">级别</div>
-        <div class="log-cell tag">标签</div>
-        <div class="log-cell message">消息</div>
+        <div class="log-cell time">Time</div>
+        <div class="log-cell priority">Level</div>
+        <div class="log-cell tag">Tag</div>
+        <div class="log-cell message">Message</div>
       </div>
       <el-scrollbar ref="scrollbarRef" height="calc(100vh - 240px)" @scroll="handleScroll">
         <div v-if="filteredLogs.length > 0" class="log-entries">
@@ -99,7 +99,7 @@
           <div class="virtual-padding-bottom" :style="{ height: `${bottomPadding}px` }"></div>
         </div>
         <div v-else class="no-logs-message">
-          {{ isRunning ? '正在等待日志...' : '没有日志可显示' }}
+          {{ isRunning ? 'Waiting for logs...' : 'No logs to display' }}
         </div>
       </el-scrollbar>
       <div class="auto-scroll-indicator" v-if="!isNearBottom && isRunning">
@@ -226,7 +226,7 @@ const startLogcat = async () => {
   try {
     const adb = getAdbInstance()
     if (!adb) {
-      ElMessage.error('请先连接设备')
+      ElMessage.error('Please connect device first')
       return
     }
     
@@ -271,12 +271,12 @@ const startLogcat = async () => {
       }
     } catch (error) {
       console.error('启动 Logcat 流时出错:', error)
-      ElMessage.error('启动 Logcat 失败，请检查设备连接状态')
+      ElMessage.error('Failed to start Logcat, please check device connection status')
       isRunning.value = false
     }
   } catch (error) {
     console.error('创建 Logcat 实例时出错:', error)
-    ElMessage.error('启动 Logcat 失败，请检查设备连接状态')
+    ElMessage.error('Failed to start Logcat, please check device connection status')
     isRunning.value = false
   }
 }
@@ -375,7 +375,7 @@ const clearLogs = async () => {
     ElMessage.success('日志已清除')
   } catch (error) {
     console.error('清除日志失败，请重试', error)
-    ElMessage.error('清除日志失败，请重试')
+    ElMessage.error('Failed to clear logs, please retry')
   }
 }
 

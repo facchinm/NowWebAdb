@@ -5,8 +5,8 @@
       <div class="loading-spinner">
         <div class="spinner"></div>
       </div>
-      <div class="loading-text">{{ message || '正在连接设备...' }}</div>
-      <div class="loading-subtext">{{ subMessage || '请稍等片刻' }}</div>
+      <div class="loading-text">{{ message || 'Connecting device...' }}</div>
+      <div class="loading-subtext">{{ subMessage || 'Please wait a moment' }}</div>
     </div>
   </div>
 </template>

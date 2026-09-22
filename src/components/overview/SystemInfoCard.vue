@@ -2,96 +2,96 @@
   <div class="info-section">
     <div class="section-header">
       <SvgIcon icon="AndroidIcon" :color="'#4CAF50'" :style="{ width: 18 + 'px', height: 18 + 'px'}"/>
-      <span class="section-title">系统信息</span>
+      <span class="section-title">System Information</span>
     </div>
     
     <div class="info-grid">
       <div class="info-item">
-        <div class="info-label">设备型号</div>
+        <div class="info-label">Device Model</div>
         <div class="info-value">{{ deviceInfo.deviceModel }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">制造商</div>
+        <div class="info-label">Manufacturer</div>
         <div class="info-value">{{ deviceInfo.manufacturer }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">品牌</div>
+        <div class="info-label">Brand</div>
         <div class="info-value">{{ deviceInfo.brand }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">序列号</div>
+        <div class="info-label">Serial Number</div>
         <el-tooltip :content="deviceInfo.serialNumber" placement="top" :disabled="!deviceInfo.serialNumber || deviceInfo.serialNumber.length < 15">
           <div class="info-value text-ellipsis">{{ deviceInfo.serialNumber }}</div>
         </el-tooltip>
       </div>
       <div class="info-item">
-        <div class="info-label">Android 版本</div>
+        <div class="info-label">Android Version</div>
         <div class="info-value">{{ deviceInfo.androidVersion }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">SDK 版本</div>
+        <div class="info-label">SDK Version</div>
         <div class="info-value">{{ deviceInfo.sdkVersionCode }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">产品名称</div>
+        <div class="info-label">Product Name</div>
         <div class="info-value">{{ deviceInfo.product }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">构建标识</div>
+        <div class="info-label">Build ID</div>
         <el-tooltip :content="deviceInfo.display" placement="top" :disabled="!deviceInfo.display || deviceInfo.display.length < 15">
           <div class="info-value text-ellipsis">{{ deviceInfo.display }}</div>
         </el-tooltip>
       </div>
       <div class="info-item">
-        <div class="info-label">构建版本</div>
+        <div class="info-label">Build Version</div>
         <div class="info-value">{{ deviceInfo.id }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">构建类型</div>
+        <div class="info-label">Build Type</div>
         <div class="info-value">{{ deviceInfo.type }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">构建标签</div>
+        <div class="info-label">Build Tags</div>
         <el-tooltip :content="deviceInfo.tags" placement="top" :disabled="!deviceInfo.tags || deviceInfo.tags.length < 15">
           <div class="info-value text-ellipsis">{{ deviceInfo.tags }}</div>
         </el-tooltip>
       </div>
       <div class="info-item">
-        <div class="info-label">引导加载程序</div>
+        <div class="info-label">Bootloader</div>
         <div class="info-value">{{ deviceInfo.bootloader }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">分区信息</div>
+        <div class="info-label">AB Partition</div>
         <div class="info-value">{{ deviceInfo.abPartition }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">设备 ID</div>
+        <div class="info-label">Device ID</div>
         <div class="info-value">{{ deviceInfo.device }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">内核版本</div>
+        <div class="info-label">Kernel Version</div>
         <el-tooltip :content="deviceInfo.kernelVersion" placement="top" :disabled="!deviceInfo.kernelVersion || deviceInfo.kernelVersion.length < 15">
           <div class="info-value text-ellipsis">{{ deviceInfo.kernelVersion }}</div>
         </el-tooltip>
       </div>
       <div class="info-item">
-        <div class="info-label">构建用户</div>
+        <div class="info-label">Build User</div>
         <div class="info-value">{{ deviceInfo.user }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">构建主机</div>
+        <div class="info-label">Build Host</div>
         <el-tooltip :content="deviceInfo.host" placement="top" :disabled="!deviceInfo.host || deviceInfo.host.length < 15">
           <div class="info-value text-ellipsis">{{ deviceInfo.host }}</div>
         </el-tooltip>
       </div>
       <div class="info-item">
-        <div class="info-label">指纹</div>
+        <div class="info-label">Fingerprint</div>
         <el-tooltip :content="deviceInfo.fingerPrint" placement="top" :disabled="!deviceInfo.fingerPrint || deviceInfo.fingerPrint.length < 15">
           <div class="info-value text-ellipsis">{{ deviceInfo.fingerPrint }}</div>
         </el-tooltip>
       </div>
       <div class="info-item">
-        <div class="info-label">上电时间</div>
+        <div class="info-label">Uptime</div>
         <div class="info-value">{{ deviceInfo.uptime }}</div>
       </div>
     </div>

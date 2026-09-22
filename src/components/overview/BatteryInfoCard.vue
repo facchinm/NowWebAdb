@@ -2,22 +2,22 @@
   <div class="info-section">
     <div class="section-header">
       <SvgIcon icon="BatteryIcon" :color="'#4CAF50'" :style="{ width: 18 + 'px', height: 18 + 'px'}"/>
-      <span class="section-title">电池信息</span>
+      <span class="section-title">Battery Information</span>
     </div>
     
     <div class="info-content">
       <div class="info-item">
-        <div class="info-label">电池温度</div>
+        <div class="info-label">Battery Temperature</div>
         <div class="info-value" :style="{ color: getTemperatureColor(deviceInfo.temperature) }">
           {{ deviceInfo.temperature }}°C
         </div>
       </div>
       <div class="info-item">
-        <div class="info-label">电池电压</div>
+        <div class="info-label">Battery Voltage</div>
         <div class="info-value">{{ deviceInfo.voltage }}V</div>
       </div>
       <div class="info-item">
-        <div class="info-label">电池电量</div>
+        <div class="info-label">Battery Level</div>
         <div class="info-value battery-display">
           <el-progress 
             :percentage="deviceInfo.batteryPercentage" 

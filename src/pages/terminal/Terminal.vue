@@ -3,8 +3,8 @@
     <!-- 终端内容区域 -->
     <div class="terminal-content">
       <div v-if="!isDeviceConnected" class="no-device">
-        <el-empty description="设备未连接">
-          <el-button type="primary" @click="checkDevice">检查设备连接</el-button>
+        <el-empty description="Device Not Connected">
+          <el-button type="primary" @click="checkDevice">Check Device Connection</el-button>
         </el-empty>
       </div>
       <div 
@@ -25,34 +25,34 @@
     >
       <div class="context-menu-item" @click="handleContextMenuCommand('restart')">
         <el-icon><Refresh /></el-icon>
-        <span>重新启动终端</span>
+        <span>Restart Terminal</span>
       </div>
       <div class="context-menu-item" @click="handleContextMenuCommand('clear')">
         <el-icon><Delete /></el-icon>
-        <span>清除终端内容</span>
+        <span>Clear Terminal</span>
       </div>
       <div class="context-menu-divider"></div>
       <div class="context-menu-item" @click="handleContextMenuCommand('copy')">
         <el-icon><CopyDocument /></el-icon>
-        <span>复制选中内容</span>
+        <span>Copy Selected</span>
       </div>
       <div class="context-menu-item" @click="handleContextMenuCommand('paste')">
         <el-icon><DocumentCopy /></el-icon>
-        <span>粘贴</span>
+        <span>Paste</span>
       </div>
       <div class="context-menu-divider"></div>
       <div class="context-menu-item" @click="handleContextMenuCommand('selectAll')">
         <el-icon><Select /></el-icon>
-        <span>全选</span>
+        <span>Select All</span>
       </div>
       <div class="context-menu-item" @click="handleContextMenuCommand('fontSize')">
         <el-icon><ZoomIn /></el-icon>
-        <span>调整字体大小</span>
+        <span>Adjust Font Size</span>
       </div>
     </div>
 
     <!-- 字体大小调整对话框 -->
-    <el-dialog v-model="fontSizeDialogVisible" title="调整字体大小" width="300px">
+    <el-dialog v-model="fontSizeDialogVisible" title="Adjust Font Size" width="300px">
       <div class="font-size-control">
         <el-slider
           v-model="fontSize"
@@ -64,13 +64,13 @@
         />
         <div class="font-size-preview">
           <span :style="{ fontSize: fontSize + 'px' }">
-            预览文本 Preview Text
+            Preview Text
           </span>
         </div>
       </div>
       <template #footer>
-        <el-button @click="fontSizeDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="applyFontSize">应用</el-button>
+        <el-button @click="fontSizeDialogVisible = false">Cancel</el-button>
+        <el-button type="primary" @click="applyFontSize">Apply</el-button>
       </template>
     </el-dialog>
   </div>
@@ -122,7 +122,7 @@ onMounted(async () => {
     }
   } catch (error) {
     console.error('初始化终端时出错:', error)
-    ElMessage.error('终端初始化失败')
+    ElMessage.error('Terminal initialization failed')
   }
 })
 
@@ -141,7 +141,7 @@ const checkDevice = async () => {
   isDeviceConnected.value = !!(adbInstance)
   
   if (!isDeviceConnected.value) {
-    ElMessage.warning('请先连接设备')
+    ElMessage.warning('Please connect device first')
   } else {
     console.log('设备已连接，ADB实例:', adbInstance)
   }
@@ -160,7 +160,7 @@ const startTerminal = async () => {
     const adb = await getAdbInstance()
     if (!adb) {
       isDeviceConnected.value = false
-      ElMessage.error('无法获取ADB实例，请确保设备已连接')
+      ElMessage.error('Unable to get ADB instance, please ensure device is connected')
       return
     }
     isDeviceConnected.value = true
@@ -256,7 +256,7 @@ const startTerminal = async () => {
     
   } catch (error) {
     console.error('启动终端时出错:', error);
-    ElMessage.error(`启动终端失败: ${error.message}`);
+    ElMessage.error(`Terminal startup failed: ${error.message}`);
     await cleanup();
   } finally {
     isConnecting.value = false;
@@ -267,7 +267,7 @@ const startTerminal = async () => {
 const clearTerminal = () => {
   if (terminal) {
     terminal.clear()
-    ElMessage.success('终端已清除')
+    ElMessage.success('Terminal cleared')
   } else {
     ElMessage.warning('终端未启动')
   }
@@ -331,9 +331,9 @@ const copySelectedText = () => {
     const selectedText = terminal.getSelection()
     if (selectedText) {
       navigator.clipboard.writeText(selectedText).then(() => {
-        ElMessage.success('已复制到剪贴板')
+        ElMessage.success('Copied to clipboard')
       }).catch(() => {
-        ElMessage.error('复制失败')
+        ElMessage.error('Copy failed')
       })
     }
   } else {
@@ -356,7 +356,7 @@ const pasteText = async () => {
       ElMessage.success('已粘贴文本')
     }
   } catch (error) {
-    ElMessage.error('粘贴失败，请检查剪贴板权限')
+    ElMessage.error('Paste failed, please check clipboard permissions')
   }
 }
 

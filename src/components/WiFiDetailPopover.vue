@@ -19,19 +19,19 @@
           <span>{{ wifiDetails.ssid || '--' }}</span>
         </div>
         <div class="wifi-info-item">
-          <div class="wifi-info-label">频率：</div>
+          <div class="wifi-info-label">Frequency:</div>
           <div class="wifi-info-value">{{ wifiDetails.frequency || '--' }}</div>
         </div>
         <div class="wifi-info-item">
-          <div class="wifi-info-label">MAC地址：</div>
+          <div class="wifi-info-label">MAC Address:</div>
           <div class="wifi-info-value">{{ wifiDetails.macAddress || '--' }}</div>
         </div>
         <div class="wifi-info-item">
-          <div class="wifi-info-label">IP地址：</div>
+          <div class="wifi-info-label">IP Address:</div>
           <div class="wifi-info-value">{{ wifiDetails.ipAddress || '--' }}</div>
         </div>
         <div class="wifi-info-item">
-          <div class="wifi-info-label">连接速度：</div>
+          <div class="wifi-info-label">Connection Speed:</div>
           <div class="wifi-info-value">{{ wifiDetails.linkSpeed || '--' }}</div>
         </div>
       </div>

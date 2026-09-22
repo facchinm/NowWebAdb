@@ -9,10 +9,10 @@
         X: {{ absoluteX }}, Y: {{ absoluteY }}
       </div>
       <div class="device-info">
-        设备: {{ deviceWidth }}×{{ deviceHeight }} ({{ relativeX.toFixed(3) }}, {{ relativeY.toFixed(3) }})
+        Device: {{ deviceWidth }}×{{ deviceHeight }} ({{ relativeX.toFixed(3) }}, {{ relativeY.toFixed(3) }})
       </div>
       <div class="instruction">
-        在屏幕任意位置🖱右键复制相对坐标
+        Right-click anywhere on screen to copy relative coordinates🖱
       </div>
     </div>
   </div>

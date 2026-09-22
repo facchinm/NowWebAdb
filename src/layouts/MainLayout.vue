@@ -8,23 +8,26 @@
     <!-- 右侧的内容区域，使用Tabs切换 -->
     <div class="content-wrapper">
       <el-tabs v-model="activeTab" tab-position="left" class="feature-tabs">
-        <el-tab-pane label="基础信息" name="overview">
+        <el-tab-pane label="Overview" name="overview">
           <Overview />
         </el-tab-pane>
-        <el-tab-pane label="文件管理" name="files">
+        <el-tab-pane label="Files" name="files">
           <FileManage />
         </el-tab-pane>
-        <el-tab-pane label="应用管理" name="apps">
+        <el-tab-pane label="Apps" name="apps">
           <AppManage />
         </el-tab-pane>
-        <el-tab-pane label="日志查看" name="logcat">
+        <el-tab-pane label="Logs" name="logcat">
           <Logcat />
         </el-tab-pane>
-        <el-tab-pane label="命令终端" name="terminal">
+        <el-tab-pane label="Terminal" name="terminal">
           <Terminal />
         </el-tab-pane>
-        <el-tab-pane label="性能数据" name="performance">
+        <el-tab-pane label="Performance" name="performance">
           <PerformancePage />
+        </el-tab-pane>
+        <el-tab-pane label="Forwarded Service" name="forwardedService" class="full-height-pane">
+          <ForwardedService />
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -41,6 +44,7 @@ import AppManage from '@/pages/appManage/appManage.vue';
 import Logcat from '@/pages/androidLogcat/logcat.vue';
 import Terminal from '@/pages/terminal/Terminal.vue';
 import PerformancePage from '@/pages/performance/PerformancePage.vue';
+import ForwardedService from '@/pages/forwardedService/ForwardedService.vue';
 
 const activeTab = ref('overview');
 </script>
@@ -134,5 +138,11 @@ const activeTab = ref('overview');
   background: transparent;
   box-shadow: none;
   overflow: visible;
+}
+
+/* Panes that manage their own internal layout/scrolling need the real height, not "auto" */
+:deep(.el-tab-pane.full-height-pane) {
+  height: 100%;
+  overflow: hidden;
 }
 </style> 

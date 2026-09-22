@@ -29,7 +29,7 @@
         <div class="side-toolbar" v-if="!isLoading && !hasError && !isFullscreen && isSidebarVisible">
         <!-- 侧边栏顶部的收缩按钮 -->
         <div class="sidebar-toggle-top" @click="toggleSidebar">
-          <el-tooltip content="收起操作栏" placement="left">
+          <el-tooltip content="Hide Toolbar" placement="left">
             <el-icon :size="14">
               <ArrowDown />
             </el-icon>
@@ -77,10 +77,10 @@
     />
     <div v-if="hasError" class="error-container">
       <div class="error-content">
-        <h3>连接错误</h3>
+        <h3>Connection Error</h3>
         <p>{{ connectionError }}</p>
         <button @click="retryConnection" class="retry-button">
-          重试连接
+          Retry
         </button>
       </div>
     </div>
@@ -93,7 +93,7 @@
       />
       <!-- 侧边栏展开按钮 -->
       <div class="sidebar-expand-button" v-if="!isSidebarVisible" @click="toggleSidebar">
-        <el-tooltip content="显示操作栏" placement="top">
+        <el-tooltip content="Show Toolbar" placement="top">
           <div class="expand-btn">
             <el-icon :size="14">
               <ArrowUp />
