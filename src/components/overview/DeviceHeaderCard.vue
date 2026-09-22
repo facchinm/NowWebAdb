@@ -8,7 +8,7 @@
       <div class="device-specs">
         <div class="device-spec-item">
           <SvgIcon icon="AndroidIcon" :color="'#4CAF50'" :style="{ width: 16 + 'px', height: 16 + 'px'}"/>
-          <span class="mx-2">Android {{ deviceInfo.androidVersion }} (SDK {{ deviceInfo.sdkVersionCode }})</span>
+          <span class="mx-2">{{ deviceInfo.androidVersion }} (Kernel {{ deviceInfo.sdkVersionCode }})</span>
         </div>
         <div class="device-spec-item">
           <SvgIcon icon="CpuIcon" :color="'#2196F3'" :style="{ width: 16 + 'px', height: 16 + 'px'}"/>
@@ -25,7 +25,6 @@
 
 <script setup>
 import SvgIcon from "@/components/SvgIcon.vue";
-import { getBatteryColor, getTemperatureColor } from "@/utils/deviceInfoService.js";
 
 defineProps({
   deviceInfo: {

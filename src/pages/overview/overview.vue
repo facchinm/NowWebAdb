@@ -3,20 +3,15 @@
     <!-- 设备基本信息卡片 -->
     <DeviceHeaderCard :device-info="deviceInfo" />
 
-    <!-- 基本信息和电池状态 -->
+    <!-- 基本信息 -->
     <el-row :gutter="20" class="same-height-row">
       <!-- 网络信息 -->
-      <el-col :xs="24" :sm="24" :md="8" :lg="8" :xl="8">
+      <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
         <NetworkInfoCard :device-info="deviceInfo" />
-      </el-col>
-      
-      <!-- 电池信息 -->
-      <el-col :xs="24" :sm="24" :md="8" :lg="8" :xl="8">
-        <BatteryInfoCard :device-info="deviceInfo" />
       </el-col>
 
       <!-- 存储信息 -->
-      <el-col :xs="24" :sm="24" :md="8" :lg="8" :xl="8">
+      <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
         <StorageInfoCard :device-info="deviceInfo" />
       </el-col>
     </el-row>
@@ -61,7 +56,6 @@ import {
 // 导入拆分的组件
 import DeviceHeaderCard from '@/components/overview/DeviceHeaderCard.vue';
 import NetworkInfoCard from '@/components/overview/NetworkInfoCard.vue';
-import BatteryInfoCard from '@/components/overview/BatteryInfoCard.vue';
 import StorageInfoCard from '@/components/overview/StorageInfoCard.vue';
 import PerformancePreviewCard from '@/components/overview/PerformancePreviewCard.vue';
 import SystemInfoCard from '@/components/overview/SystemInfoCard.vue';
@@ -75,9 +69,6 @@ const intervalId = ref();
 const performanceIntervalId = ref(); // 用于性能图表数据更新
 const deviceInfo = ref({
   // 初始化空对象，将通过getDeviceInfo获取数据
-  batteryPercentage: 0,
-  voltage: 0,
-  temperature: 0,
   memoryUsedRate: 0,
   storageUsedRate: 0,
 });

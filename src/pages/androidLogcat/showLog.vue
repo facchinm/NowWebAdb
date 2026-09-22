@@ -73,7 +73,7 @@
             :key="item.id"
             :class="[
               'log-entry',
-              `priority-${AndroidLogPriorityToCharacter[item.priority]?.toLowerCase()}`
+              `priority-${LogPriorityToCharacter[item.priority]?.toLowerCase()}`
             ]"
             @click="toggleRowExpansion(item.id)"
           >
@@ -85,7 +85,7 @@
                 effect="dark"
                 class="priority-tag"
               >
-                {{ AndroidLogPriorityToCharacter[item.priority] }}
+                {{ LogPriorityToCharacter[item.priority] }}
               </el-tag>
             </div>
             <div class="log-cell tag">{{ item.tag }}</div>
@@ -115,15 +115,30 @@
 import { ref, onUnmounted, shallowRef, computed, nextTick, onMounted, watch } from 'vue'
 import { useDeviceStore } from '@/stores/device'
 import { ElMessage } from 'element-plus'
-import { getAdbInstance } from '@/utils/adbManager'
+import { getAdbInstance, spawnLogStream } from '@/utils/adbManager'
 import { Delete, Download, VideoPlay, VideoPause, ArrowDown } from '@element-plus/icons-vue'
-import { Logcat, AndroidLogPriority, AndroidLogPriorityToCharacter } from '@yume-chan/android-bin'
+
+// Generic Linux log severity levels (replaces Android's V/D/I/W/E/F logcat priorities).
+// Numerically ordered low-to-high so the existing "priority >= selected" filter still works.
+const LogPriority = { Verbose: 0, Debug: 1, Info: 2, Warn: 3, Error: 4, Fatal: 5 }
+const LogPriorityToCharacter = { 0: 'V', 1: 'D', 2: 'I', 3: 'W', 4: 'E', 5: 'F' }
+
+// syslog/journald PRIORITY field (0=emerg..7=debug) -> our internal levels
+const syslogPriorityToLevel = (priority) => {
+  const p = Number(priority)
+  if (Number.isNaN(p)) return LogPriority.Info
+  if (p <= 2) return LogPriority.Fatal
+  if (p === 3) return LogPriority.Error
+  if (p === 4) return LogPriority.Warn
+  if (p === 5 || p === 6) return LogPriority.Info
+  return LogPriority.Debug
+}
 
 // 状态变量
 const deviceStore = useDeviceStore()
 const isRunning = ref(false)
 const logs = shallowRef([])
-const selectedPriority = ref(AndroidLogPriority.Verbose)
+const selectedPriority = ref(LogPriority.Verbose)
 const tagFilter = ref('')
 const searchQuery = ref('')
 const scrollbarRef = ref(null)
@@ -139,10 +154,10 @@ const bottomPadding = ref(0) // 底部填充高度
 const scrollTop = ref(0) // 滚动位置
 
 // Logcat 实例
-let logcat = null
-let logStream = null
-let abortController = null
-let reader = null
+let journalStream = null
+let journalReader = null
+let dmesgStream = null
+let dmesgReader = null
 let shouldStopLogcat = false
 
 // 日志队列和处理相关变量
@@ -155,12 +170,12 @@ let logIdCounter = 0 // 用于生成唯一ID
 
 // 优先级选项
 const priorityOptions = [
-  { label: '详细 (V)', value: AndroidLogPriority.Verbose },
-  { label: '调试 (D)', value: AndroidLogPriority.Debug },
-  { label: '信息 (I)', value: AndroidLogPriority.Info },
-  { label: '警告 (W)', value: AndroidLogPriority.Warn },
-  { label: '错误 (E)', value: AndroidLogPriority.Error },
-  { label: '致命 (F)', value: AndroidLogPriority.Fatal }
+  { label: 'Verbose (V)', value: LogPriority.Verbose },
+  { label: 'Debug (D)', value: LogPriority.Debug },
+  { label: 'Info (I)', value: LogPriority.Info },
+  { label: 'Warn (W)', value: LogPriority.Warn },
+  { label: 'Error (E)', value: LogPriority.Error },
+  { label: 'Fatal (F)', value: LogPriority.Fatal }
 ]
 
 // 使用计算属性来过滤日志
@@ -221,62 +236,100 @@ const toggleLogcat = async () => {
   }
 }
 
-// 启动 Logcat
-const startLogcat = async () => {
+// 解析一行 `journalctl -o json` 输出为统一的日志条目
+const parseJournalLine = (line) => {
+  let obj
   try {
-    const adb = getAdbInstance()
-    if (!adb) {
-      ElMessage.error('Please connect device first')
-      return
-    }
-    
-    isRunning.value = true
-    shouldStopLogcat = false
-    logs.value = []
-    logIdCounter = 0
-    
-    // 创建 Logcat 实例
-    logcat = new Logcat(adb)
-    abortController = new AbortController()
-    
-    try {
-      // 清除现有日志缓冲区
-      await logcat.clear()
-      
-      // 获取二进制日志流
-      logStream = logcat.binary()
-      reader = logStream.getReader()
-      
-      // 读取日志
-      while (!shouldStopLogcat) {
-        try {
-          const { done, value } = await reader.read()
-          if (done) break
-          
-          // 为日志添加唯一ID
-          value.id = logIdCounter++
-          
-          // 将日志条目添加到队列
-          logQueue.push(value)
-          
-          if (!isProcessingQueue) {
-            processLogQueue()
-          }
-        } catch (err) {
-          if (!shouldStopLogcat) {
-            console.error('读取 logcat 输出时出错:', err)
-          }
-          break
+    obj = JSON.parse(line)
+  } catch {
+    return null
+  }
+  const microseconds = parseInt(obj.__REALTIME_TIMESTAMP || '0', 10)
+  const message = typeof obj.MESSAGE === 'string' ? obj.MESSAGE : JSON.stringify(obj.MESSAGE ?? '')
+  return {
+    id: logIdCounter++,
+    timestampMs: microseconds ? microseconds / 1000 : Date.now(),
+    priority: syslogPriorityToLevel(obj.PRIORITY),
+    tag: obj.SYSLOG_IDENTIFIER || obj._COMM || 'journal',
+    message
+  }
+}
+
+// 解析一行 dmesg 输出 (内核环形缓冲区消息，格式因内核/util-linux版本而异，
+// 这里只做尽力而为的解析：剥离开头的 [uptime] 时间戳，标记为 kernel 来源)
+const KERNEL_TS_REGEX = /^\[\s*\d+\.\d+\]\s*(.*)$/
+const parseDmesgLine = (line) => {
+  if (!line.trim()) return null
+  const match = line.match(KERNEL_TS_REGEX)
+  return {
+    id: logIdCounter++,
+    timestampMs: Date.now(),
+    priority: LogPriority.Info,
+    tag: 'kernel',
+    message: match ? match[1] : line
+  }
+}
+
+/** Continuously read lines from a stdout stream and hand each parsed entry to the queue. */
+const pumpLogStream = async (stdout, parseLine) => {
+  const reader = stdout.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  try {
+    while (!shouldStopLogcat) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+
+      let newlineIndex
+      while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+        const line = buffer.slice(0, newlineIndex)
+        buffer = buffer.slice(newlineIndex + 1)
+        const entry = parseLine(line)
+        if (entry) {
+          logQueue.push(entry)
+          if (!isProcessingQueue) processLogQueue()
         }
       }
-    } catch (error) {
-      console.error('启动 Logcat 流时出错:', error)
-      ElMessage.error('Failed to start Logcat, please check device connection status')
-      isRunning.value = false
     }
+  } catch (err) {
+    if (!shouldStopLogcat) {
+      console.error('读取日志流时出错:', err)
+    }
+  } finally {
+    try { reader.releaseLock() } catch { /* already released */ }
+  }
+}
+
+// 启动日志流 (journalctl 覆盖系统服务日志，dmesg 覆盖内核环形缓冲区日志)
+const startLogcat = async () => {
+  const adb = getAdbInstance()
+  if (!adb) {
+    ElMessage.error('Please connect device first')
+    return
+  }
+
+  isRunning.value = true
+  shouldStopLogcat = false
+  logs.value = []
+  logIdCounter = 0
+
+  try {
+    journalStream = await spawnLogStream('journalctl -f -o json --no-pager -n 200 2>/dev/null')
+    pumpLogStream(journalStream.stdout, parseJournalLine)
   } catch (error) {
-    console.error('创建 Logcat 实例时出错:', error)
-    ElMessage.error('Failed to start Logcat, please check device connection status')
+    console.warn('journalctl not available:', error)
+  }
+
+  try {
+    dmesgStream = await spawnLogStream('dmesg --follow 2>/dev/null')
+    pumpLogStream(dmesgStream.stdout, parseDmesgLine)
+  } catch (error) {
+    console.warn('dmesg not available:', error)
+  }
+
+  if (!journalStream && !dmesgStream) {
+    ElMessage.error('Neither journalctl nor dmesg is available on this device')
     isRunning.value = false
   }
 }
@@ -311,72 +364,29 @@ const processLogQueue = async () => {
   isProcessingQueue = false
 }
 
-// 停止 Logcat
+// 停止日志流
 const stopLogcat = async () => {
   shouldStopLogcat = true
   isRunning.value = false
 
-  // 取消读取操作
-  if (reader) {
-    try {
-      await reader.cancel()
-    } catch (error) {
-      console.error('取消 reader 时出错:', error)
-    }
-    
-    try {
-      reader.releaseLock()
-    } catch (error) {
-      console.error('释放 reader 锁时出错:', error)
-    }
-    reader = null
+  if (journalStream) {
+    journalStream.kill()
+    journalStream = null
+  }
+  if (dmesgStream) {
+    dmesgStream.kill()
+    dmesgStream = null
   }
 
-  // 取消日志流
-  if (logStream) {
-    try {
-      await logStream.cancel()
-    } catch (error) {
-      console.error('取消 logStream 时出错:', error)
-    }
-    logStream = null
-  }
-
-  // 中止控制器
-  if (abortController) {
-    try {
-      abortController.abort()
-    } catch (error) {
-      console.error('中止控制器时出错:', error)
-    }
-    abortController = null
-  }
-
-  logcat = null
   logQueue.length = 0
 }
 
-// 清除日志
-const clearLogs = async () => {
-  try {
-    if (logcat) {
-      await logcat.clear()
-    } else {
-      const adb = getAdbInstance()
-      if (adb) {
-        const tempLogcat = new Logcat(adb)
-        await tempLogcat.clear()
-      }
-    }
-    
-    logs.value = []
-    logQueue.length = 0
-    logIdCounter = 0
-    ElMessage.success('日志已清除')
-  } catch (error) {
-    console.error('清除日志失败，请重试', error)
-    ElMessage.error('Failed to clear logs, please retry')
-  }
+// 清除日志 (只清空本地显示，不会破坏性地清除设备自身的 journal/内核缓冲区)
+const clearLogs = () => {
+  logs.value = []
+  logQueue.length = 0
+  logIdCounter = 0
+  ElMessage.success('日志已清除')
 }
 
 // 导出日志
@@ -398,20 +408,20 @@ const exportLogs = () => {
 
 // 格式化时间
 const formatTime = (log) => {
-  const date = new Date(log.seconds * 1000 + log.nanoseconds / 1000000)
-  return date.toLocaleTimeString('zh-CN', { hour12: false }) + '.' + 
-    String(Math.floor(log.nanoseconds / 1000000)).padStart(3, '0')
+  const date = new Date(log.timestampMs)
+  return date.toLocaleTimeString('zh-CN', { hour12: false }) + '.' +
+    String(date.getMilliseconds()).padStart(3, '0')
 }
 
 // 获取优先级对应的类型
 const getPriorityType = (priority) => {
   switch (priority) {
-    case AndroidLogPriority.Verbose: return 'info'
-    case AndroidLogPriority.Debug: return 'primary'
-    case AndroidLogPriority.Info: return 'success'
-    case AndroidLogPriority.Warn: return 'warning'
-    case AndroidLogPriority.Error: return 'danger'
-    case AndroidLogPriority.Fatal: return 'danger'
+    case LogPriority.Verbose: return 'info'
+    case LogPriority.Debug: return 'primary'
+    case LogPriority.Info: return 'success'
+    case LogPriority.Warn: return 'warning'
+    case LogPriority.Error: return 'danger'
+    case LogPriority.Fatal: return 'danger'
     default: return 'info'
   }
 }

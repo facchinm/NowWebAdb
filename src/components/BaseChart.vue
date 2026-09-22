@@ -155,7 +155,7 @@ const initChart = () => {
           shared: true,
           item: (item, i, data) => {
             const value = item.value === null || typeof item.value === 'undefined'
-              ? '暂无数据'
+              ? 'No data'
               : props.yAxisLabelFormatter(item.value);
             return { ...item, value };
           },

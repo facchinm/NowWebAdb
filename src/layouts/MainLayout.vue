@@ -1,10 +1,5 @@
 <template>
   <div class="main-layout">
-    <!-- 左侧固定的屏幕区域 -->
-    <div class="screen-container">
-      <DeviceStatusBar />
-      <Scrcpy />
-    </div>
     <!-- 右侧的内容区域，使用Tabs切换 -->
     <div class="content-wrapper">
       <el-tabs v-model="activeTab" tab-position="left" class="feature-tabs">
@@ -14,17 +9,11 @@
         <el-tab-pane label="Files" name="files">
           <FileManage />
         </el-tab-pane>
-        <el-tab-pane label="Apps" name="apps">
-          <AppManage />
-        </el-tab-pane>
         <el-tab-pane label="Logs" name="logcat">
           <Logcat />
         </el-tab-pane>
         <el-tab-pane label="Terminal" name="terminal">
           <Terminal />
-        </el-tab-pane>
-        <el-tab-pane label="Performance" name="performance">
-          <PerformancePage />
         </el-tab-pane>
         <el-tab-pane label="Forwarded Service" name="forwardedService" class="full-height-pane">
           <ForwardedService />
@@ -36,14 +25,10 @@
 
 <script setup>
 import { ref } from 'vue';
-import Scrcpy from '@/pages/scrcpyShow/scrcpy.vue';
-import DeviceStatusBar from '@/components/DeviceStatusBar.vue';
 import Overview from '@/pages/overview/overview.vue';
 import FileManage from '@/pages/fileManage/fileManage.vue';
-import AppManage from '@/pages/appManage/appManage.vue';
 import Logcat from '@/pages/androidLogcat/logcat.vue';
 import Terminal from '@/pages/terminal/Terminal.vue';
-import PerformancePage from '@/pages/performance/PerformancePage.vue';
 import ForwardedService from '@/pages/forwardedService/ForwardedService.vue';
 
 const activeTab = ref('overview');
@@ -58,22 +43,11 @@ const activeTab = ref('overview');
   background-color: #f0f2f5;
 }
 
-.screen-container {
-  flex-shrink: 0;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  box-sizing: border-box;
-}
-
 .content-wrapper {
   flex-grow: 1;
   height: 100%;
   overflow: hidden;
-  padding: 16px 16px 16px 0;
+  padding: 16px;
   box-sizing: border-box;
 }
 

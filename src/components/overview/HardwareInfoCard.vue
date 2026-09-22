@@ -35,11 +35,11 @@
         <div class="info-value">{{ deviceInfo.cpuCur }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">CPU ABI</div>
+        <div class="info-label">CPU Architecture</div>
         <div class="info-value">{{ deviceInfo.cpuAbi }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">Supported ABIs</div>
+        <div class="info-label">CPU Features</div>
         <el-tooltip :content="deviceInfo.abis" placement="top" :disabled="!deviceInfo.abis || deviceInfo.abis.length < 15">
           <div class="info-value text-ellipsis">{{ deviceInfo.abis }}</div>
         </el-tooltip>
@@ -67,7 +67,7 @@
         <div class="info-value">{{ deviceInfo.totalMemory }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">Build Host</div>
+        <div class="info-label">Hostname</div>
         <el-tooltip :content="deviceInfo.host" placement="top" :disabled="!deviceInfo.host || deviceInfo.host.length < 15">
           <div class="info-value text-ellipsis">{{ deviceInfo.host }}</div>
         </el-tooltip>

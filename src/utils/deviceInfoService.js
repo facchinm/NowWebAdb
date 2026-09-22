@@ -52,51 +52,54 @@ export const getDeviceInfo = async () => {
       storageType,
       kernelVersion
     ] = await Promise.all([
-      adb.getProp('ro.product.model').catch(() => 'Unknown'),
-      adb.getProp('ro.product.manufacturer').catch(() => 'Unknown'),
-      adb.getProp('ro.build.version.release').catch(() => 'Unknown'),
-      adb.getProp('ro.build.version.sdk').catch(() => 'Unknown'),
-      executeShellCommand(adb, "wm size | grep Physical").catch(() => ''),
-      adb.getProp('ro.sf.lcd_density').catch(() => 'Unknown'),
+      // Device model: prefer the ARM/embedded device-tree model, fall back to hostname
+      executeShellCommand(adb, "cat /proc/device-tree/model 2>/dev/null | tr -d '\\0'").then((v) => v || executeShellCommand(adb, 'hostname')).catch(() => 'Unknown'),
+      executeShellCommand(adb, "cat /sys/devices/virtual/dmi/id/sys_vendor 2>/dev/null").catch(() => 'Unknown'),
+      // OS name/version instead of Android version
+      executeShellCommand(adb, ". /etc/os-release 2>/dev/null; echo \"$PRETTY_NAME\"").catch(() => 'Unknown'),
+      executeShellCommand(adb, 'uname -r').catch(() => 'Unknown'),
+      executeShellCommand(adb, "cat /sys/class/graphics/fb0/virtual_size 2>/dev/null").catch(() => ''),
+      // No generic Linux equivalent to LCD density for a headless/embedded box
+      Promise.resolve('Unknown'),
       executeShellCommand(adb, "ip addr show wlan0 | grep 'inet ' | cut -d' ' -f6 | cut -d/ -f1").catch(() => 'Unknown'),
       executeShellCommand(adb, "free -m | awk '/Mem:/ {print $2}'").catch(() => '0'),
       executeShellCommand(adb, "free -m | awk '/Mem:/ {print $3}'").catch(() => '0'),
-      adb.getProp('ro.serialno').catch(() => adb.serial || 'Unknown'),
-      adb.getProp('ro.hardware').catch(() => '未知'),
+      executeShellCommand(adb, "cat /proc/cpuinfo | grep -i serial | head -1 | cut -d: -f2 | tr -d ' \\t'").then((v) => v || adb.serial).catch(() => adb.serial || 'Unknown'),
+      executeShellCommand(adb, 'uname -m').catch(() => 'Unknown'),
       executeShellCommand(adb, 'cat /proc/cpuinfo | grep processor | wc -l').catch(() => '0'),
       executeShellCommand(adb, 'cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq').catch(() => 'Unknown'),
       executeShellCommand(adb, 'cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq').catch(() => 'Unknown'),
       executeShellCommand(adb, 'cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq').catch(() => 'Unknown'),
-      adb.getProp('ro.product.brand').catch(() => 'Unknown'),
-      adb.getProp('ro.product.name').catch(() => 'Unknown'),
-      adb.getProp('ro.product.board').catch(() => 'Unknown'),
-      adb.getProp('ro.build.display.id').catch(() => 'Unknown'),
-      adb.getProp('ro.build.id').catch(() => 'Unknown'),
-      adb.getProp('ro.build.fingerprint').catch(() => 'Unknown'),
-      adb.getProp('ro.build.host').catch(() => 'Unknown'),
-      adb.getProp('ro.hardware').catch(() => '未知'),
-      adb.getProp('ro.product.device').catch(() => 'Unknown'),
-      adb.getProp('ro.build.user').catch(() => 'Unknown'),
-      adb.getProp('gsm.version.baseband').catch(() => 'Unknown'),
-      adb.getProp('ro.build.tags').catch(() => 'Unknown'),
-      adb.getProp('ro.build.type').catch(() => 'Unknown'),
-      adb.getProp('ro.product.cpu.abi').catch(() => 'Unknown'),
-      adb.getProp('ro.product.cpu.abilist').catch(() => 'Unknown'),
+      executeShellCommand(adb, ". /etc/os-release 2>/dev/null; echo \"$ID\"").catch(() => 'Unknown'),
+      executeShellCommand(adb, ". /etc/os-release 2>/dev/null; echo \"$NAME\"").catch(() => 'Unknown'),
+      executeShellCommand(adb, "cat /proc/device-tree/compatible 2>/dev/null | tr -d '\\0' | cut -d, -f1").catch(() => 'Unknown'),
+      executeShellCommand(adb, ". /etc/os-release 2>/dev/null; echo \"$VERSION_ID\"").catch(() => 'Unknown'),
+      executeShellCommand(adb, ". /etc/os-release 2>/dev/null; echo \"$VERSION\"").catch(() => 'Unknown'),
+      executeShellCommand(adb, 'uname -a').catch(() => 'Unknown'),
+      executeShellCommand(adb, 'hostname').catch(() => 'Unknown'),
+      executeShellCommand(adb, "cat /proc/device-tree/compatible 2>/dev/null | tr -d '\\0'").catch(() => 'Unknown'),
+      executeShellCommand(adb, 'cat /etc/machine-id 2>/dev/null').catch(() => 'Unknown'),
+      executeShellCommand(adb, 'whoami').catch(() => 'Unknown'),
+      Promise.resolve('N/A'), // no cellular baseband on a generic Linux box
+      executeShellCommand(adb, 'uname -v').catch(() => 'Unknown'),
+      Promise.resolve('Unknown'), // no Android build type concept on generic Linux
+      executeShellCommand(adb, 'uname -m').catch(() => 'Unknown'),
+      executeShellCommand(adb, "cat /proc/cpuinfo | grep -m1 -E 'flags|Features' | cut -d: -f2").catch(() => 'Unknown'),
       getWifiInfo().catch(() => 'Unknown'),
       getBatteryInfo().catch(() => ({ percentage: 0, voltage: 0, temperature: 0 })),
-      executeShellCommand(adb, 'getprop ro.boot.verifiedbootstate').catch(() => 'Unknown'),
-      executeShellCommand(adb, 'getprop ro.boot.slot_suffix').catch(() => 'Unknown'),
+      executeShellCommand(adb, "cat /sys/class/dmi/id/bios_vendor 2>/dev/null").catch(() => 'Unknown'),
+      Promise.resolve('N/A'), // no A/B partition slots on generic Linux
       executeShellCommand(adb, 'cat /proc/uptime | cut -d. -f1').catch(() => '0'),
       getStorageInfo().catch(() => ({ total: '0G', used: '0G', usedRate: 0 })),
-      executeShellCommand(adb, 'getprop ro.boot.bootdevice').catch(() => 'Unknown'),
+      executeShellCommand(adb, 'findmnt -no FSTYPE /').catch(() => 'Unknown'),
       executeShellCommand(adb, 'uname -r').catch(() => 'Unknown')
     ]);
 
-    // 处理分辨率
+    // 处理分辨率 (fb0 virtual_size reports "WIDTH,HEIGHT")
     let formattedResolution = 'Unknown';
     if (resolution) {
-      const match = resolution.match(/Physical size: (\d+x\d+)/);
-      formattedResolution = match ? match[1] : 'Unknown';
+      const match = resolution.trim().match(/(\d+),(\d+)/);
+      formattedResolution = match ? `${match[1]}x${match[2]}` : 'Unknown';
     }
 
     // 处理CPU频率
@@ -201,36 +204,26 @@ export const executeShellCommand = async (device, command) => {
  * @returns {Promise<string>} WiFi名称
  */
 export const getWifiInfo = async () => {
-  // 尝试多种WiFi信息获取方式
+  // 尝试多种WiFi信息获取方式 (generic Linux wireless tools/NetworkManager, no Android services)
   const methods = [
-    // 方法1: 使用cmd wifi status命令
+    // 方法1: wireless-tools (iwgetid)
     async () => {
-      const res = await executeCommand('cmd wifi status');
-      if (res) {
-        const wifiRegex = /Wifi is connected to "(.*?)"/;
-        const wifiMatch = res.match(wifiRegex);
-        return wifiMatch ? wifiMatch[1] : null;
-      }
-      return null;
+      const res = await executeCommand('iwgetid -r 2>/dev/null');
+      return res ? res.trim() : null;
     },
-    // 方法2: 使用dumpsys wifi命令
+    // 方法2: NetworkManager (nmcli)
     async () => {
-      const res = await executeCommand('dumpsys wifi | grep SSID');
-      if (res) {
-        // 更新正则表达式，使其更通用
-        // 匹配 SSID: 后面的内容，到第一个逗号为止
-        const wifiRegex = /SSID: ([^,]*),/;
-        // 首先尝试匹配 mWifiInfo SSID: 格式的行
-        const wifiInfoLine = res.split('\n').find(line => line.includes('mWifiInfo SSID:'));
-        if (wifiInfoLine) {
-          const wifiMatch = wifiInfoLine.match(wifiRegex);
-          return wifiMatch ? wifiMatch[1].trim().replace(/"/g, '') : null;
-        }
-        // 如果没有匹配到mWifiInfo行，则尝试匹配任何包含SSID的行
-        const wifiMatch = res.match(wifiRegex);
-        return wifiMatch ? wifiMatch[1].trim().replace(/"/g, '') : null;
-      }
-      return null;
+      const res = await executeCommand("nmcli -t -f active,ssid dev wifi 2>/dev/null | grep '^yes'");
+      if (!res) return null;
+      const [, ssid] = res.trim().split(':');
+      return ssid || null;
+    },
+    // 方法3: iw (modern wireless tool)
+    async () => {
+      const res = await executeCommand("iw dev wlan0 link 2>/dev/null | grep SSID");
+      if (!res) return null;
+      const match = res.match(/SSID:\s*(.+)/);
+      return match ? match[1].trim() : null;
     }
   ];
 
@@ -254,25 +247,28 @@ export const getWifiInfo = async () => {
  * @returns {Promise<{percentage: number, voltage: number, temperature: number}>} 电池信息
  */
 export const getBatteryInfo = async () => {
+  // Many embedded/SBC Linux devices have no battery at all - that's expected,
+  // not an error, so this just resolves to zeros in that case.
   try {
-    const batteryInfo = await executeCommand('dumpsys battery');
-    
-    if (!batteryInfo) {
+    const batteryDir = (await executeCommand(
+      "ls /sys/class/power_supply/ 2>/dev/null | grep -i -m1 bat"
+    )).trim();
+
+    if (!batteryDir) {
       return { percentage: 0, voltage: 0, temperature: 0 };
     }
-    
-    // 解析电量
-    const levelMatch = batteryInfo.match(/level:\s*(\d+)/);
-    const percentage = levelMatch ? parseInt(levelMatch[1], 10) : 0;
-    
-    // 解析电压
-    const voltageMatch = batteryInfo.match(/voltage:\s*(\d+)/);
-    const voltage = voltageMatch ? parseFloat(voltageMatch[1]) / 1000000 : 0;
-    
-    // 解析温度
-    const temperatureMatch = batteryInfo.match(/temperature:\s*(\d+)/);
-    const temperature = temperatureMatch ? parseInt(temperatureMatch[1], 10) / 10 : 0;
-    
+
+    const base = `/sys/class/power_supply/${batteryDir}`;
+    const [capacity, voltageNow, temp] = await Promise.all([
+      executeCommand(`cat ${base}/capacity 2>/dev/null`),
+      executeCommand(`cat ${base}/voltage_now 2>/dev/null`),
+      executeCommand(`cat ${base}/temp 2>/dev/null`)
+    ]);
+
+    const percentage = parseInt(capacity, 10) || 0;
+    const voltage = (parseInt(voltageNow, 10) || 0) / 1000000; // microvolts -> volts
+    const temperature = (parseInt(temp, 10) || 0) / 10; // decidegrees -> degrees C
+
     return { percentage, voltage, temperature };
   } catch (e) {
     console.error('获取电池信息失败:', e);
@@ -286,17 +282,18 @@ export const getBatteryInfo = async () => {
  */
 export const getStorageInfo = async () => {
   try {
-    const res = await executeCommand('df -h | grep \'/data\'');
-    
+    // Root filesystem, not Android's /data mount point (doesn't exist on generic Linux)
+    const res = await executeCommand("df -h / | tail -n 1");
+
     if (res) {
-      const storageRegex = /(\d+[GMK]) +(\d+[GMK]) +\d+[GMK] +(\d+)%/;
-      const storageMatch = res.match(storageRegex);
-      
-      if (storageMatch && storageMatch.length >= 4) {
+      const parts = res.trim().split(/\s+/);
+      // Filesystem Size Used Avail Use% Mounted-on
+      if (parts.length >= 5) {
+        const usedRate = parseInt(parts[4], 10);
         return {
-          total: storageMatch[1],
-          used: storageMatch[2],
-          usedRate: Number(storageMatch[3]),
+          total: parts[1],
+          used: parts[2],
+          usedRate: Number.isNaN(usedRate) ? 0 : usedRate,
         };
       }
     }

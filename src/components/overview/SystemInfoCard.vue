@@ -25,11 +25,11 @@
         </el-tooltip>
       </div>
       <div class="info-item">
-        <div class="info-label">Android Version</div>
+        <div class="info-label">OS Version</div>
         <div class="info-value">{{ deviceInfo.androidVersion }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">SDK Version</div>
+        <div class="info-label">Kernel Release</div>
         <div class="info-value">{{ deviceInfo.sdkVersionCode }}</div>
       </div>
       <div class="info-item">
@@ -47,7 +47,7 @@
         <div class="info-value">{{ deviceInfo.id }}</div>
       </div>
       <div class="info-item">
-        <div class="info-label">Build Type</div>
+        <div class="info-label">Distro ID</div>
         <div class="info-value">{{ deviceInfo.type }}</div>
       </div>
       <div class="info-item">
@@ -57,7 +57,7 @@
         </el-tooltip>
       </div>
       <div class="info-item">
-        <div class="info-label">Bootloader</div>
+        <div class="info-label">Bootloader/BIOS</div>
         <div class="info-value">{{ deviceInfo.bootloader }}</div>
       </div>
       <div class="info-item">

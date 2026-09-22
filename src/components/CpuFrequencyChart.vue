@@ -10,7 +10,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
-import BaseChart from '../pages/performance/components/BaseChart.vue';
+import BaseChart from './BaseChart.vue';
 
 // 定义props
 const props = defineProps({
@@ -37,9 +37,9 @@ watch(() => props.cpuData, (newData) => {
     historyData.value.push({
       time: new Date(latestDataPoint.timestamp).toLocaleTimeString('zh-CN', { hour12: false }),
       value: latestDataPoint.frequency,
-      type: 'CPU频率'
+      type: 'CPU Frequency'
     });
-    
+
     // 保持历史数据不超过最大数量
     if (historyData.value.length > props.maxPoints) {
       historyData.value = historyData.value.slice(-props.maxPoints);
@@ -58,7 +58,7 @@ onMounted(() => {
       mockData.push({
         time: time.toLocaleTimeString('zh-CN', { hour12: false }),
         value: 1200 + Math.random() * 800, // 随机频率在1200~2000MHz之间
-        type: 'CPU频率'
+        type: 'CPU Frequency'
       });
     }
     

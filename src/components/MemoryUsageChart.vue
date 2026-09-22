@@ -10,7 +10,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
-import BaseChart from '../pages/performance/components/BaseChart.vue';
+import BaseChart from './BaseChart.vue';
 
 // 定义props
 const props = defineProps({
@@ -37,7 +37,7 @@ watch(() => props.memoryData, (newData) => {
     historyData.value.push({
       time: new Date(latestDataPoint.timestamp).toLocaleTimeString('zh-CN', { hour12: false }),
       value: latestDataPoint.memory,
-      type: '已用内存'
+      type: 'Used Memory'
     });
     
     // 保持历史数据不超过最大数量
@@ -58,7 +58,7 @@ onMounted(() => {
       mockData.push({
         time: time.toLocaleTimeString('zh-CN', { hour12: false }),
         value: 2000 + Math.random() * 1000, // 随机内存占用在2000~3000MB之间
-        type: '已用内存'
+        type: 'Used Memory'
       });
     }
     
