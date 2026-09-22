@@ -243,6 +243,66 @@ export const getWifiInfo = async () => {
 };
 
 /**
+ * 扫描附近的WiFi网络 (依赖 NetworkManager 的 nmcli)
+ * @returns {Promise<Array<{ssid: string, signal: number, security: string}>>}
+ */
+export const scanWifiNetworks = async () => {
+  try {
+    const res = await executeCommand("nmcli -t -f SSID,SIGNAL,SECURITY dev wifi list --rescan yes 2>/dev/null");
+    if (!res) return [];
+
+    const bySsid = new Map();
+    for (const line of res.trim().split('\n')) {
+      // nmcli -t escapes literal colons within a field as "\:"
+      const parts = line.split(/(?<!\\):/).map((p) => p.replace(/\\:/g, ':'));
+      const [ssid, signalStr, security] = parts;
+      if (!ssid) continue; // hidden/blank SSID entries aren't connectable by name
+
+      const signal = parseInt(signalStr, 10) || 0;
+      const existing = bySsid.get(ssid);
+      if (!existing || existing.signal < signal) {
+        bySsid.set(ssid, { ssid, signal, security: security || '' });
+      }
+    }
+
+    return Array.from(bySsid.values()).sort((a, b) => b.signal - a.signal);
+  } catch (e) {
+    console.error('扫描WiFi网络失败:', e);
+    return [];
+  }
+};
+
+/**
+ * 连接到指定的WiFi网络 (依赖 NetworkManager 的 nmcli)
+ * @param {string} ssid
+ * @param {string} [password]
+ * @returns {Promise<{success: boolean, message: string}>}
+ */
+export const connectWifiNetwork = async (ssid, password = '') => {
+  if (!ssid) {
+    return { success: false, message: 'No network selected' };
+  }
+
+  const escapedSsid = ssid.replace(/"/g, '\\"');
+  const command = password
+    ? `nmcli dev wifi connect "${escapedSsid}" password "${password.replace(/"/g, '\\"')}" 2>&1`
+    : `nmcli dev wifi connect "${escapedSsid}" 2>&1`;
+
+  try {
+    const res = await executeCommand(command);
+    const output = (res || '').trim();
+    const success = /successfully activated|already active/i.test(output);
+    return {
+      success,
+      message: output || (success ? 'Connected' : 'Failed to connect')
+    };
+  } catch (e) {
+    console.error('连接WiFi网络失败:', e);
+    return { success: false, message: e.message || 'Failed to connect' };
+  }
+};
+
+/**
  * 获取电池信息
  * @returns {Promise<{percentage: number, voltage: number, temperature: number}>} 电池信息
  */

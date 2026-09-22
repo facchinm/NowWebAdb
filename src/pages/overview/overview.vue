@@ -6,13 +6,18 @@
     <!-- 基本信息 -->
     <el-row :gutter="20" class="same-height-row">
       <!-- 网络信息 -->
-      <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
+      <el-col :xs="24" :sm="24" :md="8" :lg="8" :xl="8">
         <NetworkInfoCard :device-info="deviceInfo" />
       </el-col>
 
       <!-- 存储信息 -->
-      <el-col :xs="24" :sm="24" :md="12" :lg="12" :xl="12">
+      <el-col :xs="24" :sm="24" :md="8" :lg="8" :xl="8">
         <StorageInfoCard :device-info="deviceInfo" />
+      </el-col>
+
+      <!-- WiFi 连接 -->
+      <el-col :xs="24" :sm="24" :md="8" :lg="8" :xl="8">
+        <WifiConnectCard />
       </el-col>
     </el-row>
     
@@ -57,6 +62,7 @@ import {
 import DeviceHeaderCard from '@/components/overview/DeviceHeaderCard.vue';
 import NetworkInfoCard from '@/components/overview/NetworkInfoCard.vue';
 import StorageInfoCard from '@/components/overview/StorageInfoCard.vue';
+import WifiConnectCard from '@/components/overview/WifiConnectCard.vue';
 import PerformancePreviewCard from '@/components/overview/PerformancePreviewCard.vue';
 import SystemInfoCard from '@/components/overview/SystemInfoCard.vue';
 import HardwareInfoCard from '@/components/overview/HardwareInfoCard.vue';
