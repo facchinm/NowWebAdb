@@ -14,7 +14,7 @@ export default defineConfig({
         port: 5173,
         open: true
     },
-    base: "https://facchinm.github.io/NowWebAdb/",
+    base: "/NowWebAdb/",
     resolve: {
         alias: {
             // @ 替代为 src
